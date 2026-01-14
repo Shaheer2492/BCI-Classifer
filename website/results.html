@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Results - BCI Classifier</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>BCI Classifier</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="methodology.html">Methodology</a></li>
+                <li><a href="results.html" class="active">Results</a></li>
+                <li><a href="documentation.html">Documentation</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container">
+            <h1 class="hero-title">Results Dashboard</h1>
+            <p class="hero-subtitle">Ground truth labels and performance metrics</p>
+        </div>
+    </header>
+
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Phase 1: Ground Truth Labels</h2>
+
+            <div id="phase1-status" class="alert alert-info">
+                <strong>Status:</strong> Ready to run ground truth label generation.
+                Click "Load Results" below after running the Phase 1 script.
+            </div>
+
+            <div class="results-container">
+                <div style="text-align: center; margin: 2rem 0;">
+                    <button class="btn btn-primary" onclick="loadResults()">Load Results</button>
+                    <button class="btn btn-secondary" onclick="refreshResults()">Refresh Data</button>
+                </div>
+
+                <div id="summary-stats" style="display: none;">
+                    <h3>Summary Statistics</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="total-subjects">-</div>
+                            <div class="stat-label">Total Subjects</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="mean-accuracy">-</div>
+                            <div class="stat-label">Mean Accuracy</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="median-accuracy">-</div>
+                            <div class="stat-label">Median Accuracy</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="accuracy-range">-</div>
+                            <div class="stat-label">Accuracy Range</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="subject-table-container" style="display: none; margin-top: 2rem;">
+                    <h3>Subject Performance</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="data-table" id="subject-table">
+                            <thead>
+                                <tr>
+                                    <th>Subject ID</th>
+                                    <th>Accuracy</th>
+                                    <th>Std Dev</th>
+                                    <th>Trials</th>
+                                    <th>Channels</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="subject-table-body">
+                                <!-- Data will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section section-alt">
+        <div class="container">
+            <h2 class="section-title">Performance Distribution</h2>
+            <div class="results-container">
+                <div id="distribution-chart">
+                    <p style="text-align: center; color: var(--text-secondary);">
+                        Performance distribution visualization will appear here after loading results.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">How to Generate Results</h2>
+            <div class="results-container">
+                <h3>Run Phase 1 Script</h3>
+                <div class="code-block">
+                    <code>
+# Navigate to the project directory<br>
+cd /home/user/BCI-Classifer<br>
+<br>
+# Install dependencies (first time only)<br>
+pip install -r requirements.txt<br>
+<br>
+# Run ground truth label generation<br>
+python src/generate_ground_truth_labels.py<br>
+<br>
+# Results will be saved to results/ground_truth_labels.json
+                    </code>
+                </div>
+
+                <div class="alert alert-warning">
+                    <strong>Note:</strong> The first run will download the PhysionetMI dataset (~2.5 GB).
+                    Total processing time: approximately 1-2 hours for all 109 subjects.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 BCI Classifier Project. Built with MetaBCI and MNE.</p>
+            <p>
+                <a href="https://github.com/Shaheer2492/BCI-Classifer" target="_blank">GitHub Repository</a> |
+                <a href="documentation.html">Documentation</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/results.js"></script>
+</body>
+</html>
