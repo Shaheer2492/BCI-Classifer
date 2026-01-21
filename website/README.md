@@ -13,6 +13,7 @@ This website provides:
 ## Features
 
 - 🎨 Modern, responsive design
+- 🧠 **Real-time BCI Classification Demo**: Interactive brain activity simulation
 - 📊 Interactive results dashboard
 - 📈 Performance distribution visualization
 - 💾 JSON data loading and display
@@ -50,6 +51,25 @@ python -m http.server 8000
 
 3. Click "Load Results" to view the data
 
+### Real-time BCI Demo
+
+The homepage features an interactive BCI classification demo that simulates:
+
+- **Brain Activity Visualization**: Real-time motor cortex activity with animated brain regions
+- **EEG Channel Monitoring**: Live C3, Cz, C4 channel activity with waveform display
+- **Classification Accuracy**: Dynamic accuracy gauge with prediction confidence
+- **Live Metrics**: Signal quality, trial count, session time, and update rate
+- **Classification History**: Rolling log of predictions and accuracies
+
+**How to Use:**
+1. Click "Start BCI Session" to begin the simulation
+2. Watch brain activity respond to simulated motor imagery
+3. Observe real-time classification results
+4. View the classification history build up
+5. Click "Stop Session" to end the demo
+
+The demo updates at 10 Hz and simulates realistic BCI classification patterns for educational purposes.
+
 ## File Structure
 
 ```
@@ -62,7 +82,8 @@ website/
 │   └── style.css       # All styling
 ├── js/
 │   ├── main.js         # Main JavaScript utilities
-│   └── results.js      # Results page functionality
+│   ├── results.js      # Results page functionality
+│   └── bci-demo.js     # Real-time BCI demo simulation
 └── assets/             # Images and other assets (future)
 ```
 

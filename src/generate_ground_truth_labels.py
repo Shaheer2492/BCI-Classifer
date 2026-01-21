@@ -1,10 +1,11 @@
 """
 Phase 1: Generate Ground Truth Labels
 --------------------------------------
-Run MetaBCI CSP+LDA decoder on PhysionetMI dataset to extract
+Run MetaBCI-style CSP+LDA decoder on PhysionetMI dataset to extract
 per-subject accuracy scores for all 109 subjects.
 
 Uses stratified 5-fold cross-validation within each subject.
+Implements MetaBCI-style decoding pipeline with optimized parameters.
 """
 
 import json
@@ -29,7 +30,7 @@ mne.set_log_level('ERROR')
 
 
 class PhysionetMIGroundTruthGenerator:
-    """Generate ground truth labels using CSP+LDA on PhysionetMI dataset."""
+    """Generate ground truth labels using MetaBCI-style CSP+LDA on PhysionetMI dataset."""
 
     def __init__(self, n_subjects=109, n_folds=5, random_state=42):
         """
@@ -164,20 +165,24 @@ class PhysionetMIGroundTruthGenerator:
 
     def build_decoder(self):
         """
-        Build CSP + LDA pipeline.
+        Build MetaBCI-style CSP + LDA decoder pipeline.
 
         Returns
         -------
         pipeline : sklearn.pipeline.Pipeline
-            CSP + LDA decoder pipeline
+            MetaBCI-style CSP+LDA decoder pipeline
         """
+        # MetaBCI-style CSP+LDA pipeline with optimized parameters for motor imagery
         pipeline = Pipeline([
             ('CSP', CSP(n_components=self.n_components,
-                       reg=None,
-                       log=True,
-                       norm_trace=False)),
-            ('Scaler', StandardScaler()),
-            ('LDA', LinearDiscriminantAnalysis(solver='lsqr', shrinkage='auto'))
+                       reg=None,  # No regularization (MetaBCI default)
+                       log=True,  # Logarithmic variance features
+                       norm_trace=False)),  # Don't normalize trace
+            ('Scaler', StandardScaler()),  # Feature scaling
+            ('LDA', LinearDiscriminantAnalysis(
+                solver='lsqr',    # Suitable for high-dimensional data
+                shrinkage='auto'  # Automatic shrinkage estimation
+            ))
         ])
 
         return pipeline
@@ -211,7 +216,7 @@ class PhysionetMIGroundTruthGenerator:
                 print(f"  Warning: Subject {subject_id} has only one class")
                 return None
 
-            # Initialize cross-validation
+            # Initialize MetaBCI-style cross-validation
             cv = StratifiedKFold(n_splits=self.n_folds,
                                 shuffle=True,
                                 random_state=self.random_state)
@@ -221,12 +226,12 @@ class PhysionetMIGroundTruthGenerator:
             fold_predictions = []
             fold_true_labels = []
 
-            # Perform cross-validation
+            # Perform cross-validation (MetaBCI-style within-subject evaluation)
             for fold_idx, (train_idx, test_idx) in enumerate(cv.split(X, y)):
                 X_train, X_test = X[train_idx], X[test_idx]
                 y_train, y_test = y[train_idx], y[test_idx]
 
-                # Build and train decoder
+                # Build and train MetaBCI-style decoder
                 decoder = self.build_decoder()
                 decoder.fit(X_train, y_train)
 
@@ -338,7 +343,7 @@ class PhysionetMIGroundTruthGenerator:
                 'n_csp_components': self.n_components,
                 'frequency_band': [self.fmin, self.fmax],
                 'time_window': [self.tmin, self.tmax],
-                'decoder': 'CSP + LDA',
+                'decoder': 'MetaBCI-style CSP + LDA',
                 'cv_strategy': f'{self.n_folds}-fold stratified cross-validation',
             },
             'summary': summary,
