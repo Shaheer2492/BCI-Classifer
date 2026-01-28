@@ -14,7 +14,7 @@ async function loadResults() {
         statusDiv.className = 'alert alert-info';
 
         // Attempt to load the results file
-        const response = await fetch('../results/ground_truth_labels.json');
+        const response = await fetch('../src/results/ground_truth_labels.json');
 
         if (!response.ok) {
             throw new Error('Results file not found. Please run Phase 1 script first.');
