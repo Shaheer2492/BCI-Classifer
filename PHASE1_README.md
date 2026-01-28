@@ -7,7 +7,7 @@ This phase generates ground truth labels by running CSP+LDA decoders on the Phys
 - **Dataset**: PhysionetMI (109 subjects)
 - **Tasks**: Motor imagery (left/right hand, hands/feet)
 - **Runs**: 4, 8, 12 (MI tasks)
-- **Decoder**: CSP (4 components) + LDA
+- **Decoder**: MetaBCI CSP (4 components) + sklearn LDA
 - **Cross-validation**: 5-fold stratified within-subject
 - **Output**: JSON file with per-subject accuracy scores
 
@@ -60,7 +60,7 @@ The script generates a JSON file with the following structure:
     "n_csp_components": 4,
     "frequency_band": [7.0, 30.0],
     "time_window": [1.0, 4.0],
-    "decoder": "CSP + LDA",
+    "decoder": "MetaBCI CSP + sklearn LDA",
     "cv_strategy": "5-fold stratified cross-validation"
   },
   "summary": {
@@ -118,13 +118,12 @@ We use **within-subject stratified 5-fold cross-validation** because:
 - Epoch window: 1-4 seconds after cue onset
 - Baseline: None (relative to task period)
 
-### CSP Parameters
+### MetaBCI CSP Parameters
 - Number of components: 4 (2 per class)
-- Regularization: None
-- Log-variance: True
-- Normalized trace: False
+- Uses MetaBCI's optimized CSP implementation
+- Automatic eigenvalue decomposition and spatial pattern extraction
 
-### LDA Parameters
+### sklearn LDA Parameters
 - Solver: lsqr (suitable for high-dimensional data)
 - Shrinkage: auto (automatic selection)
 

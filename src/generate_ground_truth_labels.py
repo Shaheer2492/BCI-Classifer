@@ -1,11 +1,11 @@
 """
 Phase 1: Generate Ground Truth Labels
 --------------------------------------
-Run MetaBCI-style CSP+LDA decoder on PhysionetMI dataset to extract
+Run MetaBCI CSP+LDA decoder on PhysionetMI dataset to extract
 per-subject accuracy scores for all 109 subjects.
 
 Uses stratified 5-fold cross-validation within each subject.
-Implements MetaBCI-style decoding pipeline with optimized parameters.
+Implements MetaBCI's CSP spatial filter with sklearn's LDA classifier.
 """
 
 import json
@@ -22,7 +22,8 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.model_selection import StratifiedKFold
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-from mne.decoding import CSP
+# Use MetaBCI's CSP decoder
+from metabci.brainda.algorithms.decomposition import CSP
 from tqdm import tqdm
 
 warnings.filterwarnings('ignore')
@@ -30,7 +31,11 @@ mne.set_log_level('ERROR')
 
 
 class PhysionetMIGroundTruthGenerator:
-    """Generate ground truth labels using MetaBCI-style CSP+LDA on PhysionetMI dataset."""
+    """Generate ground truth labels using MetaBCI CSP+LDA on PhysionetMI dataset.
+
+    Uses MetaBCI's CSP spatial filter for motor imagery feature extraction
+    and sklearn's LDA for classification.
+    """
 
     def __init__(self, n_subjects=109, n_folds=5, random_state=42):
         """
@@ -165,19 +170,19 @@ class PhysionetMIGroundTruthGenerator:
 
     def build_decoder(self):
         """
-        Build MetaBCI-style CSP + LDA decoder pipeline.
+        Build MetaBCI CSP + LDA decoder pipeline.
+
+        Uses MetaBCI's CSP spatial filter for feature extraction and
+        sklearn's LDA for classification.
 
         Returns
         -------
         pipeline : sklearn.pipeline.Pipeline
-            MetaBCI-style CSP+LDA decoder pipeline
+            MetaBCI CSP+LDA decoder pipeline
         """
-        # MetaBCI-style CSP+LDA pipeline with optimized parameters for motor imagery
+        # MetaBCI CSP+LDA pipeline for motor imagery classification
         pipeline = Pipeline([
-            ('CSP', CSP(n_components=self.n_components,
-                       reg=None,  # No regularization (MetaBCI default)
-                       log=True,  # Logarithmic variance features
-                       norm_trace=False)),  # Don't normalize trace
+            ('CSP', CSP(n_components=self.n_components)),  # MetaBCI's CSP
             ('Scaler', StandardScaler()),  # Feature scaling
             ('LDA', LinearDiscriminantAnalysis(
                 solver='lsqr',    # Suitable for high-dimensional data
@@ -343,7 +348,7 @@ class PhysionetMIGroundTruthGenerator:
                 'n_csp_components': self.n_components,
                 'frequency_band': [self.fmin, self.fmax],
                 'time_window': [self.tmin, self.tmax],
-                'decoder': 'MetaBCI-style CSP + LDA',
+                'decoder': 'MetaBCI CSP + sklearn LDA',
                 'cv_strategy': f'{self.n_folds}-fold stratified cross-validation',
             },
             'summary': summary,
