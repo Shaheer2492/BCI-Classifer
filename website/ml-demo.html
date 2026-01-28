@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BCI Classifier - Motor Imagery Performance Prediction</title>
+    <title>ML-Enhanced BCI Demo - BCI Classifier</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -13,66 +13,33 @@
                 <h1>BCI Classifier</h1>
             </div>
             <ul class="nav-menu">
-                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="index.html">Home</a></li>
                 <li><a href="methodology.html">Methodology</a></li>
                 <li><a href="results.html">Results</a></li>
-                <li><a href="ml-demo.html">ML Demo</a></li>
+                <li><a href="ml-demo.html" class="active">ML Demo</a></li>
                 <li><a href="documentation.html">Documentation</a></li>
-            </ul>        </div>
+            </ul>
+        </div>
     </nav>
 
     <header class="hero">
         <div class="container">
             <div class="hero-content">
-                <h1 class="hero-title">Brain-Computer Interface Performance Prediction</h1>
-                <p class="hero-subtitle">Predicting Motor Imagery BCI decoder performance using early-trial features</p>
-                <div class="hero-buttons">
-                    <a href="results.html" class="btn btn-primary">View Results</a>
-                    <a href="documentation.html" class="btn btn-secondary">Documentation</a>
-                </div>
+                <h1 class="hero-title">🤖 ML-Enhanced BCI Performance Prediction</h1>
+                <p class="hero-subtitle">Real-time performance prediction using Gradient Boosting on PhysioNet data</p>
             </div>
         </div>
     </header>
 
-    <section class="section">
-        <div class="container">
-            <h2 class="section-title">Project Overview</h2>
-            <p class="section-description">
-                This project develops a machine learning system to predict Brain-Computer Interface (BCI)
-                decoder performance from early motor imagery trials. By identifying strong and weak performers
-                early in the training process, we can optimize BCI calibration and improve user experience.
-            </p>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🧠</div>
-                    <h3>Ground Truth Generation</h3>
-                    <p>MetaBCI CSP+LDA decoders run on PhysionetMI dataset (109 subjects) to establish performance baselines</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Feature Extraction</h3>
-                    <p>Extract band power, CSP patterns, ERD/ERS, variability, and SNR from early trials</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🤖</div>
-                    <h3>Performance Prediction</h3>
-                    <p>Machine learning models predict decoder accuracy using Random Forest, XGBoost, or SVM</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📈</div>
-                    <h3>Evaluation & Analysis</h3>
-                    <p>Correlation analysis, classification metrics, and ablation studies on trial requirements</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Real-time BCI Demo Section -->
+    <!-- Real-time BCI Demo Section with ML -->
     <section class="section section-alt bci-demo-section">
         <div class="container">
-            <h2 class="section-title">🧠 Real-Time BCI Classification Demo</h2>
-            <p class="section-description">Experience live motor imagery classification with simulated brain activity data</p>
+            <h2 class="section-title">🧠 Real-Time BCI Classification with ML Predictions</h2>
+            <p class="section-description">Experience live motor imagery classification with machine learning performance prediction</p>
+
+            <div class="alert alert-info" style="margin-bottom: 2rem;">
+                <strong>Note:</strong> Make sure the prediction server is running: <code>python src/prediction_server.py</code>
+            </div>
 
             <div class="demo-controls">
                 <div class="control-panel">
@@ -235,83 +202,9 @@
         </div>
     </section>
 
-    <section class="section section-alt">
-        <div class="container">
-            <h2 class="section-title">Pipeline Architecture</h2>
-            <div class="pipeline">
-                <div class="pipeline-step">
-                    <div class="step-number">1</div>
-                    <h3>Ground Truth Labels</h3>
-                    <p>Run decoders on PhysionetMI</p>
-                    <p>Extract accuracy scores</p>
-                    <p>Classify: High/Medium/Low</p>
-                </div>
-                <div class="pipeline-arrow">→</div>
-                <div class="pipeline-step">
-                    <div class="step-number">2</div>
-                    <h3>Feature Extraction</h3>
-                    <p>Band power (8-30 Hz)</p>
-                    <p>CSP patterns</p>
-                    <p>ERD/ERS & variability</p>
-                </div>
-                <div class="pipeline-arrow">→</div>
-                <div class="pipeline-step">
-                    <div class="step-number">3</div>
-                    <h3>Prediction Model</h3>
-                    <p>Input: Early trial features</p>
-                    <p>Output: Predicted accuracy</p>
-                    <p>Models: RF/XGBoost/SVM</p>
-                </div>
-                <div class="pipeline-arrow">→</div>
-                <div class="pipeline-step">
-                    <div class="step-number">4</div>
-                    <h3>Evaluation</h3>
-                    <p>Predicted vs Actual</p>
-                    <p>Classification metrics</p>
-                    <p>Ablation studies</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section">
-        <div class="container">
-            <h2 class="section-title">Key Features</h2>
-            <div class="info-grid">
-                <div class="info-card">
-                    <h3>Dataset</h3>
-                    <ul>
-                        <li>PhysionetMI: 109 subjects</li>
-                        <li>Motor imagery tasks</li>
-                        <li>Left/right hand, feet</li>
-                        <li>64-channel EEG</li>
-                    </ul>
-                </div>
-                <div class="info-card">
-                    <h3>Decoder</h3>
-                    <ul>
-                        <li>CSP (4 components)</li>
-                        <li>Linear Discriminant Analysis</li>
-                        <li>5-fold cross-validation</li>
-                        <li>7-30 Hz bandpass filter</li>
-                    </ul>
-                </div>
-                <div class="info-card">
-                    <h3>Features</h3>
-                    <ul>
-                        <li>Band power (C3/C4/Cz)</li>
-                        <li>Spatial filters (CSP)</li>
-                        <li>ERD/ERS magnitude</li>
-                        <li>Trial variability & SNR</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2026 BCI Classifier Project. Built with MetaBCI and MNE.</p>
+            <p>&copy; 2026 BCI Classifier Project. Built with MetaBCI, MNE, and Gradient Boosting ML.</p>
             <p>
                 <a href="https://github.com/Shaheer2492/BCI-Classifer" target="_blank">GitHub Repository</a> |
                 <a href="documentation.html">Documentation</a>
@@ -321,5 +214,6 @@
 
     <script src="js/main.js"></script>
     <script src="js/bci-demo.js"></script>
+    <script src="js/bci-demo-ml.js"></script>
 </body>
 </html>
