@@ -29,10 +29,10 @@ Simply open the HTML files in a web browser:
 
 ```bash
 # Open the homepage
-open website/index.html
+open docs/index.html
 
 # Or use a simple HTTP server
-cd website
+cd docs
 python -m http.server 8000
 # Then visit http://localhost:8000
 ```
@@ -46,7 +46,7 @@ python -m http.server 8000
 
 2. Open the Results page in your browser:
    ```bash
-   open website/results.html
+   open docs/results.html
    ```
 
 3. Click "Load Results" to view the data
@@ -73,7 +73,7 @@ The demo updates at 10 Hz and simulates realistic BCI classification patterns fo
 ## File Structure
 
 ```
-website/
+docs/
 ├── index.html           # Homepage
 ├── methodology.html     # Methodology page
 ├── results.html         # Results dashboard

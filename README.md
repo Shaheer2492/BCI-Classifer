@@ -55,10 +55,10 @@ Runs Flask server on `http://localhost:5000` for ML predictions.
 
 ### 6. View Web Demo
 
-Open `website/ml-demo.html` in your browser or run:
+Open `docs/ml-demo.html` in your browser or run:
 
 ```bash
-cd website
+cd docs
 python -m http.server 8000
 # Visit http://localhost:8000/ml-demo.html
 ```
@@ -77,7 +77,7 @@ BCI-Classifer/
 │       ├── early_trial_features.json    # Early features (Phase 2)
 │       ├── model_evaluation.json        # Model performance metrics
 │       └── models/                      # Trained ML models
-├── website/
+├── docs/
 │   ├── index.html                       # Main landing page
 │   ├── ml-demo.html                     # ML-enhanced BCI demo
 │   ├── results.html                     # Ground truth results

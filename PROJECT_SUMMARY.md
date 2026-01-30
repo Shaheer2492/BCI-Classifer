@@ -109,9 +109,9 @@ Expected performance with proper early prediction:
 - `src/results/models/` - Trained ML models (pkl files)
 
 ### Web Interface
-- `website/index.html` - Landing page with basic demo
-- `website/ml-demo.html` - ML-enhanced demo
-- `website/results.html` - Ground truth results viewer
+- `docs/index.html` - Landing page with basic demo
+- `docs/ml-demo.html` - ML-enhanced demo
+- `docs/results.html` - Ground truth results viewer
 
 ### Documentation
 - `README.md` - Complete project overview

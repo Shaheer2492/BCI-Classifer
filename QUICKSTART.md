@@ -86,12 +86,12 @@ Available endpoints:
 
 **Option A: Simple File Open**
 ```bash
-open website/ml-demo.html
+open docs/ml-demo.html
 ```
 
 **Option B: Local Web Server (Recommended)**
 ```bash
-cd website
+cd docs
 python -m http.server 8000
 ```
 
