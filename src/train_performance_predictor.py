@@ -52,89 +52,84 @@ class BCIPerformancePredictor:
         self.scalers = {}
         self.results = {}
 
-    def extract_early_trial_features(self, subject_data: Dict) -> np.ndarray:
+    def load_early_trial_features(self, features_path: str, labels_path: str) -> Tuple[np.ndarray, np.ndarray, List[int]]:
         """
-        Extract features from subject data for prediction.
-
-        For now, uses basic statistical features from the ground truth data.
-        In a full implementation, this would extract features from early trials.
+        Load early trial features and ground truth labels.
+        
+        This method loads features extracted from ONLY the first N trials
+        (Phase 2) and matches them with final accuracies (Phase 1) to enable
+        true early prediction of BCI performance.
 
         Parameters
         ----------
-        subject_data : dict
-            Subject data from ground truth labels
-
-        Returns
-        -------
-        features : ndarray
-            Feature vector for the subject
-        """
-        features = []
-
-        # Basic features from available data
-        features.append(subject_data['n_trials'])
-        features.append(subject_data['n_channels'])
-
-        # Class distribution features
-        class_dist = subject_data['class_distribution']
-        total_trials = sum(class_dist.values())
-        features.append(class_dist.get('0', 0) / total_trials)  # Class 0 ratio
-        features.append(class_dist.get('1', 0) / total_trials)  # Class 1 ratio
-
-        # Fold accuracy statistics (simulating early trial variability)
-        fold_accs = subject_data['fold_accuracies']
-        features.append(np.mean(fold_accs[:2]))  # Mean of first 2 folds (early trials)
-        features.append(np.std(fold_accs[:2]))   # Std of first 2 folds
-        features.append(np.max(fold_accs[:2]))   # Max of first 2 folds
-        features.append(np.min(fold_accs[:2]))   # Min of first 2 folds
-
-        # Class accuracy features
-        class_accs = subject_data['class_accuracies']
-        features.append(class_accs.get('0', 0.5))
-        features.append(class_accs.get('1', 0.5))
-
-        return np.array(features)
-
-    def load_ground_truth_data(self, json_path: str) -> Tuple[np.ndarray, np.ndarray, List[int]]:
-        """
-        Load ground truth data and extract features.
-
-        Parameters
-        ----------
-        json_path : str
+        features_path : str
+            Path to early trial features JSON file
+        labels_path : str
             Path to ground truth labels JSON file
 
         Returns
         -------
         X : ndarray
-            Feature matrix (n_subjects, n_features)
+            Feature matrix from early trials (n_subjects, n_features)
         y : ndarray
-            Target accuracies (n_subjects,)
+            Target accuracies from full dataset (n_subjects,)
         subject_ids : list
             List of subject IDs
         """
-        print(f"Loading ground truth data from {json_path}...")
+        print(f"Loading early trial features from {features_path}...")
+        print(f"Loading ground truth labels from {labels_path}...")
 
-        with open(json_path, 'r') as f:
-            data = json.load(f)
+        # Load early trial features
+        with open(features_path, 'r') as f:
+            features_data = json.load(f)
 
+        # Load ground truth labels (targets)
+        with open(labels_path, 'r') as f:
+            labels_data = json.load(f)
+
+        # Create lookup for ground truth accuracies
+        gt_lookup = {}
+        for subject in labels_data['subjects']:
+            if subject['success']:
+                gt_lookup[subject['subject_id']] = subject['accuracy']
+
+        # Match features with ground truth labels
         X_list = []
         y_list = []
         subject_ids = []
 
-        for subject in data['subjects']:
-            if subject['success']:
-                features = self.extract_early_trial_features(subject)
+        for subject in features_data['subjects']:
+            if subject['success'] and subject['subject_id'] in gt_lookup:
+                # Features from early trials (Phase 2)
+                features = np.array(subject['features'])
                 X_list.append(features)
-                y_list.append(subject['accuracy'])
+                
+                # Target accuracy from full dataset (Phase 1)
+                y_list.append(gt_lookup[subject['subject_id']])
                 subject_ids.append(subject['subject_id'])
 
         X = np.array(X_list)
         y = np.array(y_list)
 
-        print(f"Loaded {len(subject_ids)} successful subjects")
+        print(f"\n{'='*60}")
+        print(f"Data Loading Summary")
+        print(f"{'='*60}")
+        print(f"Matched subjects: {len(subject_ids)}")
         print(f"Feature shape: {X.shape}")
+        print(f"Features per subject: {X.shape[1]}")
         print(f"Target range: [{y.min():.3f}, {y.max():.3f}]")
+        print(f"Target mean: {y.mean():.3f} ± {y.std():.3f}")
+        
+        # Display feature names if available
+        if 'feature_names' in features_data['metadata']:
+            feature_names = features_data['metadata']['feature_names']
+            print(f"\nFeature categories:")
+            print(f"  - Band Power: {sum(1 for f in feature_names if 'band_power' in f)} features")
+            print(f"  - CSP Patterns: {sum(1 for f in feature_names if 'csp' in f)} features")
+            print(f"  - ERD/ERS: {sum(1 for f in feature_names if 'erdrs' in f)} features")
+            print(f"  - Variability: {sum(1 for f in feature_names if 'variability' in f)} features")
+            print(f"  - SNR: {sum(1 for f in feature_names if 'snr' in f)} features")
+        print(f"{'='*60}\n")
 
         return X, y, subject_ids
 
@@ -384,21 +379,27 @@ class BCIPerformancePredictor:
 def main():
     """Main execution function."""
     # Paths
+    features_path = 'src/results/early_trial_features.json'
     ground_truth_path = 'src/results/ground_truth_labels.json'
     output_dir = 'src/results/models'
     results_path = 'src/results/model_evaluation.json'
 
-    # Check if ground truth exists
+    # Check if required files exist
+    if not os.path.exists(features_path):
+        print(f"Error: Early trial features not found at {features_path}")
+        print("Please run extract_early_trial_features.py first (Phase 2).")
+        return
+    
     if not os.path.exists(ground_truth_path):
         print(f"Error: Ground truth file not found at {ground_truth_path}")
-        print("Please run generate_ground_truth_labels.py first.")
+        print("Please run generate_ground_truth_labels.py first (Phase 1).")
         return
 
     # Initialize predictor
     predictor = BCIPerformancePredictor(n_folds=5, random_state=42)
 
-    # Load data
-    X, y, subject_ids = predictor.load_ground_truth_data(ground_truth_path)
+    # Load data (features from early trials, targets from full dataset)
+    X, y, subject_ids = predictor.load_early_trial_features(features_path, ground_truth_path)
 
     # Train all models
     results = predictor.train_all_models(X, y)
@@ -417,6 +418,9 @@ def main():
     print("\n" + "="*60)
     print("Training Complete!")
     print("="*60)
+    print("\nNote: R² scores are expected to be lower (0.5-0.8) compared to the")
+    print("previous implementation because we're now doing TRUE early prediction")
+    print("from only the first 15 trials, not using information from all trials.")
 
 
 if __name__ == '__main__':
