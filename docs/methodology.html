@@ -82,6 +82,18 @@
             <p style="text-align: center; font-size: 0.8rem; color: #666; margin-top: 10px;">Total Feature Vector
                 Dimension: <strong>R²³</strong></p>
 
+            <h3>Scientific Rationale: Specificity vs. Complexity</h3>
+            <p>We deliberately chose <strong>task-specific features</strong> over generic complexity metrics (like
+                Entropy or Fractal Dimension). Here is why:</p>
+            <ul>
+                <li><strong>The "Specific" Approach (Ours):</strong> Motor Imagery produces a very specific
+                    "fingerprint" — a drop in power (ERD) in the 8-30Hz range, strictly over the motor cortex. Our
+                    features are tuned to detect exactly this fingerprint.</li>
+                <li><strong>The "Holistic" Approach (Alternative):</strong> Features like Entropy measure the overall
+                    "chaos" of the brain. While useful for detecting seizures or sleep stages, they are often too
+                    "noisy" to detect the subtle, localized signal of imagining a hand movement.</li>
+            </ul>
+
             <h2>Phase 3: Performance Prediction</h2>
             <p>We train regression models to map Early Features (X) to Final Accuracy (Y).</p>
             <pre><code>Model: Random Forest Regressor
