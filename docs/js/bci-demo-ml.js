@@ -6,7 +6,7 @@
 class MLBCIDemo extends BCIDemo {
     constructor() {
         super();
-        this.apiBaseUrl = 'http://localhost:5000/api';
+        this.apiBaseUrl = 'http://127.0.0.1:5001/api';
         this.currentSubject = null;
         this.mlPrediction = null;
         this.useMLPredictions = false;
@@ -61,7 +61,7 @@ class MLBCIDemo extends BCIDemo {
                     <div class="ml-prediction-info" id="ml-prediction-info">
                         <div class="info-row">
                             <span class="info-label">Model:</span>
-                            <span class="info-value">Gradient Boosting</span>
+                            <span class="info-value">Random Forest</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Subject ID:</span>
@@ -139,13 +139,13 @@ class MLBCIDemo extends BCIDemo {
 
     updateMLInfo(data) {
         document.getElementById('ml-subject-id').textContent = data.subject_id;
-        document.getElementById('ml-predicted-acc').textContent = 
+        document.getElementById('ml-predicted-acc').textContent =
             `${(data.predicted_accuracy * 100).toFixed(1)}%`;
-        document.getElementById('ml-actual-acc').textContent = 
+        document.getElementById('ml-actual-acc').textContent =
             `${(data.actual_accuracy * 100).toFixed(1)}%`;
-        
+
         const error = Math.abs(data.actual_accuracy - data.predicted_accuracy);
-        document.getElementById('ml-error').textContent = 
+        document.getElementById('ml-error').textContent =
             `${(error * 100).toFixed(2)}%`;
 
         // Update the demo to use these values
@@ -163,17 +163,43 @@ class MLBCIDemo extends BCIDemo {
     }
 
     simulateClassification() {
-        super.simulateClassification();
-
-        // If using ML predictions, override with actual subject data
+        // When using ML predictions, converge toward the ML-predicted value
+        // instead of calling the base random function
         if (this.useMLPredictions && this.currentSubject) {
-            // Use predicted accuracy with some noise
-            const baseAccuracy = this.currentSubject.predicted_accuracy * 100;
-            this.accuracy = baseAccuracy + (Math.random() - 0.5) * 5; // ±2.5% noise
-            this.accuracy = Math.max(0, Math.min(100, this.accuracy));
+            // Determine prediction from brain activity
+            const leftDominant = this.leftPower > this.rightPower * 1.1;
+            const rightDominant = this.rightPower > this.leftPower * 1.1;
 
-            // Update gauge
+            if (leftDominant) {
+                this.currentPrediction = 'Left Hand';
+                this.confidence = 70 + Math.random() * 25;
+            } else if (rightDominant) {
+                this.currentPrediction = 'Right Hand';
+                this.confidence = 70 + Math.random() * 25;
+            } else {
+                this.currentPrediction = 'Resting';
+                this.confidence = 40 + Math.random() * 30;
+            }
+
+            this.currentPredictionEl.textContent = this.currentPrediction;
+            this.confidenceEl.textContent = `${this.confidence.toFixed(1)}%`;
+
+            // Converge toward ML-predicted accuracy over 15 trials
+            const targetAccuracy = this.currentSubject.predicted_accuracy * 100;
+            const maxTrials = 15;
+            const convergenceRate = Math.min(this.trialsProcessed / maxTrials, 1.0);
+            const noise = (1 - convergenceRate) * (Math.random() - 0.5) * 15;
+            this.accuracy = 50 + (targetAccuracy - 50) * convergenceRate + noise;
+            this.accuracy = Math.max(30, Math.min(100, this.accuracy));
+
             this.updateAccuracyGauge();
+
+            if (Math.random() < 0.3) {
+                this.addClassificationToHistory();
+            }
+        } else {
+            // Non-ML mode: use base class convergence logic
+            super.simulateClassification();
         }
     }
 }

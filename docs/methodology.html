@@ -1,225 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Methodology - BCI Classifier</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Methodology | BCI Classifier</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Roboto+Mono:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/neuralink.css">
 </head>
+
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <div class="nav-brand">
-                <h1>BCI Classifier</h1>
-            </div>
-            <ul class="nav-menu">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="methodology.html" class="active">Methodology</a></li>
-                <li><a href="results.html">Results</a></li>
-                <li><a href="documentation.html">Documentation</a></li>
+    <div class="overlay-scanlines"></div>
+    <div class="app-container">
+
+        <nav class="main-nav">
+            <a href="index.html" class="nav-link">Home</a>
+            <a href="ml-demo.html" class="nav-link">Interface</a>
+            <a href="methodology.html" class="nav-link active">Methodology</a>
+            <a href="results.html" class="nav-link">Results</a>
+            <a href="documentation.html" class="nav-link">Docs</a>
+        </nav>
+
+        <main class="content-container">
+            <h1>Methodology</h1>
+            <p>Our four-phase approach to predicting BCI performance from early trial data.</p>
+
+            <h2>Phase 1: Ground Truth Label Generation</h2>
+            <p>We establish baseline performance metrics for each subject using standard MetaBCI decoders. This involves
+                processing the PhysionetMI dataset (109 subjects) to generate valid accuracy labels.</p>
+
+            <h3>Dataset & Decoder</h3>
+            <ul>
+                <li><strong>Dataset:</strong> PhysionetMI (Motor Imagery, 64 channels)</li>
+                <li><strong>Decoder:</strong> CSP (4 components) + LDA</li>
+                <li><strong>Filtering:</strong> 7-30 Hz Bandpass</li>
+                <li><strong>Validation:</strong> 5-fold Stratified Cross-Validation (Within-Subject)</li>
             </ul>
-        </div>
-    </nav>
 
-    <header class="hero">
-        <div class="container">
-            <h1 class="hero-title">Methodology</h1>
-            <p class="hero-subtitle">Four-phase approach to BCI performance prediction</p>
-        </div>
-    </header>
+            <h2>Phase 2: Feature Extraction</h2>
+            <p>We extract neurophysiological markers from the <strong>first 15 trials</strong> of each subject. These
+                "early features" are hypothetical predictors of final BCI literacy.</p>
 
-    <section class="section">
-        <div class="container">
-            <h2 class="section-title">Phase 1: Ground Truth Label Generation</h2>
-            <p class="section-description">
-                Establish baseline performance metrics for each subject using MetaBCI decoders.
+            <div class="card-grid">
+                <div class="nav-card">
+                    <span class="card-title">1. Spectral Features (12)</span>
+                    <span class="card-desc">
+                        <ul style="padding-left: 15px; margin-top: 5px; font-size: 0.8em; color: #888;">
+                            <li><strong>Band Power:</strong> Mu (8-13Hz) & Beta (13-30Hz) at C3, Cz, C4 (6 features)
+                            </li>
+                            <li><strong>ERD/ERS:</strong> Event-Related Desynchronization relative to baseline (6
+                                features)</li>
+                        </ul>
+                    </span>
+                </div>
+                <div class="nav-card">
+                    <span class="card-title">2. Spatial Features (4)</span>
+                    <span class="card-desc">
+                        <ul style="padding-left: 15px; margin-top: 5px; font-size: 0.8em; color: #888;">
+                            <li>CSP Eigenvalue Ratio</li>
+                            <li>CSP Feature Mean & Std Dev</li>
+                            <li>Class Separability Index</li>
+                        </ul>
+                    </span>
+                </div>
+                <div class="nav-card">
+                    <span class="card-title">3. Temporal Stability (7)</span>
+                    <span class="card-desc">
+                        <ul style="padding-left: 15px; margin-top: 5px; font-size: 0.8em; color: #888;">
+                            <li>Signal-to-Noise Ratio (Mean, Max, Std)</li>
+                            <li>Trial Variability (CV Mean, CV Std)</li>
+                            <li>Inter-trial Correlation</li>
+                            <li>P300 Stability Score</li>
+                        </ul>
+                    </span>
+                </div>
+            </div>
+            <p style="text-align: center; font-size: 0.8rem; color: #666; margin-top: 10px;">Total Feature Vector
+                Dimension: <strong>R²³</strong></p>
+
+            <h2>Phase 3: Performance Prediction</h2>
+            <p>We train regression models to map Early Features (X) to Final Accuracy (Y).</p>
+            <pre><code>Model: Random Forest Regressor
+Input: 23 Features (from 15 trials)
+Target: 5-fold CV Accuracy (from all trials)
+Performance: R² = 0.24, Pearson r = 0.52</code></pre>
+
+            <p>We compared multiple algorithms (XGBoost, SVM, Ridge) and found Random Forest to be the most robust to
+                noise and varying subject baselines.</p>
+
+            <h2>Limitations & Accuracy Context</h2>
+            <p>Our current predictions often hover around 55-65%. It is important to contextualize this:</p>
+            <ul>
+                <li><strong>Zero-Calibration Challenge:</strong> This model assumes <em>no prior training</em> for the
+                    subject. In BCI, achieving >60% accuracy without user feedback training (Neurofeedback) is
+                    statistically significant for a 2-class problem.</li>
+                <li><strong>Subject Variability:</strong> The "BCI Illiteracy" phenomenon affects ~15-20% of the
+                    population, who naturally do not exhibit strong ERD signals. Our model correctly identifies these
+                    users as "Low Accuracy".</li>
+                <li><strong>Short-Time Window:</strong> We are predicting long-term performance based on only the first
+                    45 seconds of data (15 trials).</li>
+            </ul>
+
+            <h2>System Architecture: Simulation vs. Real-time</h2>
+            <p>The current demonstration utilizes a <strong>Hardware-in-the-Loop (HIL) Simulation</strong> architecture.
             </p>
+            <ul>
+                <li><strong>Signal Source (Simulator):</strong> Instead of a live headset, we stream pre-recorded,
+                    validated EEG data from the PhysioNet database. This acts as a "Digital Twin" of a patient.</li>
+                <li><strong>Processing Pipeline (Real-time):</strong> The feature extraction, signal processing, and ML
+                    decoding happen in real-time (on the fly) as the data is streamed.</li>
+                <li><strong>Justification:</strong> This allows us to validate the end-to-end latency and visualization
+                    pipeline deterministically before deployment with human subjects.</li>
+            </ul>
 
-            <div class="info-grid">
-                <div class="info-card">
-                    <h3>Dataset</h3>
-                    <ul>
-                        <li>PhysionetMI dataset</li>
-                        <li>109 subjects</li>
-                        <li>Motor imagery tasks (runs 4, 8, 12)</li>
-                        <li>Left/right hand, hands/feet</li>
-                        <li>64-channel EEG recordings</li>
-                    </ul>
-                </div>
-                <div class="info-card">
-                    <h3>Decoder Configuration</h3>
-                    <ul>
-                        <li>Common Spatial Patterns (4 components)</li>
-                        <li>Linear Discriminant Analysis</li>
-                        <li>Bandpass filter: 7-30 Hz</li>
-                        <li>Epoch window: 1-4 seconds</li>
-                    </ul>
-                </div>
-                <div class="info-card">
-                    <h3>Cross-Validation</h3>
-                    <ul>
-                        <li>Within-subject evaluation</li>
-                        <li>5-fold stratified CV</li>
-                        <li>Maintains class balance</li>
-                        <li>80/20 train-test split per fold</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="alert alert-info">
-                <strong>Rationale:</strong> Within-subject CV is appropriate for Phase 1 because we aim to measure
-                each individual's decoder performance, not cross-subject generalization. This provides reliable
-                ground truth labels for the prediction model.
-            </div>
-        </div>
-    </section>
-
-    <section class="section section-alt">
-        <div class="container">
-            <h2 class="section-title">Phase 2: Feature Extraction</h2>
-            <p class="section-description">
-                Extract neurophysiological features from early trials that correlate with decoder performance.
-            </p>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">📡</div>
-                    <h3>Band Power</h3>
-                    <p>Extract spectral power in mu (8-13 Hz) and beta (13-30 Hz) bands from motor cortex channels (C3, C4, Cz).</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🎯</div>
-                    <h3>CSP Patterns</h3>
-                    <p>Compute spatial filter coefficients that maximize class separability in signal variance.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📉</div>
-                    <h3>ERD/ERS Magnitude</h3>
-                    <p>Measure event-related desynchronization and synchronization during motor imagery.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Trial Variability</h3>
-                    <p>Calculate inter-trial consistency using coefficient of variation and signal stability metrics.</p>
-                </div>
-                <div class="feature-card">
-                    <div class="feature-icon">🔊</div>
-                    <h3>Signal-to-Noise Ratio</h3>
-                    <p>Assess signal quality by comparing task-related activity to baseline noise levels.</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section">
-        <div class="container">
-            <h2 class="section-title">Phase 3: Performance Prediction Model</h2>
-            <p class="section-description">
-                Train machine learning models to predict decoder accuracy from early-trial features.
-            </p>
-
-            <div class="pipeline">
-                <div class="pipeline-step">
-                    <div class="step-number">1</div>
-                    <h3>Input Features</h3>
-                    <p>Features from first N trials</p>
-                    <p>Multiple feature sets tested</p>
-                </div>
-                <div class="pipeline-arrow">→</div>
-                <div class="pipeline-step">
-                    <div class="step-number">2</div>
-                    <h3>Model Training</h3>
-                    <p>Random Forest</p>
-                    <p>XGBoost</p>
-                    <p>Support Vector Machine</p>
-                </div>
-                <div class="pipeline-arrow">→</div>
-                <div class="pipeline-step">
-                    <div class="step-number">3</div>
-                    <h3>Output</h3>
-                    <p>Predicted accuracy score</p>
-                    <p>Confidence interval</p>
-                </div>
-            </div>
-
-            <div class="info-card">
-                <h3>Model Comparison</h3>
-                <ul>
-                    <li><strong>Random Forest:</strong> Ensemble of decision trees, robust to overfitting</li>
-                    <li><strong>XGBoost:</strong> Gradient boosting, excellent for structured data</li>
-                    <li><strong>SVM:</strong> Kernel-based method, effective in high-dimensional spaces</li>
-                </ul>
-            </div>
-        </div>
-    </section>
-
-    <section class="section section-alt">
-        <div class="container">
-            <h2 class="section-title">Phase 4: Evaluation</h2>
-            <p class="section-description">
-                Assess prediction accuracy and determine minimum trial requirements.
-            </p>
-
-            <div class="info-grid">
-                <div class="info-card">
-                    <h3>Regression Metrics</h3>
-                    <ul>
-                        <li>Pearson correlation (predicted vs actual)</li>
-                        <li>Mean absolute error (MAE)</li>
-                        <li>Root mean squared error (RMSE)</li>
-                        <li>R² score</li>
-                    </ul>
-                </div>
-                <div class="info-card">
-                    <h3>Classification Metrics</h3>
-                    <ul>
-                        <li>High/Low performer classification</li>
-                        <li>Accuracy, precision, recall</li>
-                        <li>F1 score</li>
-                        <li>ROC-AUC curve</li>
-                    </ul>
-                </div>
-                <div class="info-card">
-                    <h3>Ablation Studies</h3>
-                    <ul>
-                        <li>Minimum trials needed for prediction</li>
-                        <li>Feature importance analysis</li>
-                        <li>Cross-subject generalization</li>
-                        <li>Robustness to noise</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section">
-        <div class="container">
-            <h2 class="section-title">Technical Implementation</h2>
-            <div class="results-container">
-                <h3>Software Stack</h3>
-                <ul style="list-style: none; padding-left: 0;">
-                    <li style="padding: 0.5rem 0;"><strong>Python 3.x</strong> - Core programming language</li>
-                    <li style="padding: 0.5rem 0;"><strong>MNE-Python</strong> - EEG data processing and analysis</li>
-                    <li style="padding: 0.5rem 0;"><strong>MetaBCI</strong> - BCI decoder implementations</li>
-                    <li style="padding: 0.5rem 0;"><strong>scikit-learn</strong> - Machine learning models</li>
-                    <li style="padding: 0.5rem 0;"><strong>NumPy/SciPy</strong> - Numerical computing</li>
-                    <li style="padding: 0.5rem 0;"><strong>Pandas</strong> - Data manipulation</li>
-                    <li style="padding: 0.5rem 0;"><strong>Matplotlib/Seaborn</strong> - Visualization</li>
-                </ul>
-            </div>
-        </div>
-    </section>
-
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2026 BCI Classifier Project. Built with MetaBCI and MNE.</p>
-            <p>
-                <a href="https://github.com/Shaheer2492/BCI-Classifer" target="_blank">GitHub Repository</a> |
-                <a href="documentation.html">Documentation</a>
-            </p>
-        </div>
-    </footer>
-
-    <script src="js/main.js"></script>
+            <h2>Software Stack</h2>
+            <ul>
+                <li>Python 3.9+</li>
+                <li>MNE-Python (EEG Processing)</li>
+                <li>MetaBCI (Decoding Pipelines)</li>
+                <li>scikit-learn (Machine Learning)</li>
+                <li>Flask (API)</li>
+            </ul>
+        </main>
+    </div>
 </body>
+
 </html>

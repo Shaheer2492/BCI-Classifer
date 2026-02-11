@@ -21,9 +21,11 @@ from typing import Dict, List, Tuple
 import numpy as np
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.linear_model import Ridge
 from sklearn.svm import SVR
-from sklearn.model_selection import cross_val_score, KFold
+from sklearn.model_selection import cross_val_score, cross_val_predict, KFold
 from sklearn.preprocessing import StandardScaler
+from sklearn.feature_selection import SelectKBest, f_regression
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from scipy.stats import pearsonr, spearmanr
 import joblib
@@ -126,9 +128,11 @@ class BCIPerformancePredictor:
             print(f"\nFeature categories:")
             print(f"  - Band Power: {sum(1 for f in feature_names if 'band_power' in f)} features")
             print(f"  - CSP Patterns: {sum(1 for f in feature_names if 'csp' in f)} features")
-            print(f"  - ERD/ERS: {sum(1 for f in feature_names if 'erdrs' in f)} features")
+            print(f"  - ERD/ERS (Phase 2): {sum(1 for f in feature_names if 'erdrs' in f)} features")
             print(f"  - Variability: {sum(1 for f in feature_names if 'variability' in f)} features")
             print(f"  - SNR: {sum(1 for f in feature_names if 'snr' in f)} features")
+            print(f"  - Daniel's features: {sum(1 for f in feature_names if f in ['rpl', 'smr_strength'] or 'erd_' in f or 'ers_' in f)} features")
+            print(f"  - Andrew's features: {sum(1 for f in feature_names if 'entropy' in f or 'lzc' in f or 'tar' in f)} features")
         print(f"{'='*60}\n")
 
         return X, y, subject_ids
@@ -144,26 +148,31 @@ class BCIPerformancePredictor:
         """
         models = {
             'Random Forest': RandomForestRegressor(
-                n_estimators=100,
-                max_depth=10,
-                min_samples_split=5,
-                min_samples_leaf=2,
+                n_estimators=200,
+                max_depth=5,
+                min_samples_split=10,
+                min_samples_leaf=5,
+                max_features='sqrt',
                 random_state=self.random_state,
                 n_jobs=-1
             ),
             'Gradient Boosting': GradientBoostingRegressor(
-                n_estimators=100,
-                learning_rate=0.1,
-                max_depth=5,
-                min_samples_split=5,
-                min_samples_leaf=2,
+                n_estimators=200,
+                learning_rate=0.05,
+                max_depth=3,
+                min_samples_split=10,
+                min_samples_leaf=5,
+                subsample=0.8,
                 random_state=self.random_state
             ),
             'SVM': SVR(
                 kernel='rbf',
-                C=1.0,
+                C=0.1,
                 gamma='scale',
                 epsilon=0.1
+            ),
+            'Ridge Regression': Ridge(
+                alpha=10.0
             )
         }
 
@@ -203,13 +212,14 @@ class BCIPerformancePredictor:
         r2_scores = cross_val_score(model, X, y, cv=cv,
                                     scoring='r2', n_jobs=-1)
 
-        # Train on full data for predictions
+        # Get out-of-fold predictions for honest correlation estimates
+        y_pred_cv = cross_val_predict(model, X, y, cv=cv)
+        pearson_r, pearson_p = pearsonr(y, y_pred_cv)
+        spearman_r, spearman_p = spearmanr(y, y_pred_cv)
+
+        # Train on full data for final model and in-sample predictions
         model.fit(X, y)
         y_pred = model.predict(X)
-
-        # Calculate correlation
-        pearson_r, pearson_p = pearsonr(y, y_pred)
-        spearman_r, spearman_p = spearmanr(y, y_pred)
 
         results = {
             'model_name': model_name,
@@ -259,6 +269,15 @@ class BCIPerformancePredictor:
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X)
         self.scalers['feature_scaler'] = scaler
+
+        # Feature selection to avoid overfitting with many features and few samples
+        n_features_to_select = min(20, X_scaled.shape[1])
+        selector = SelectKBest(score_func=f_regression, k=n_features_to_select)
+        X_scaled = selector.fit_transform(X_scaled, y)
+        self.scalers['feature_selector'] = selector
+
+        selected_mask = selector.get_support()
+        print(f"Feature selection: {n_features_to_select}/{X.shape[1]} features retained")
 
         # Build models
         models = self.build_models()
@@ -312,6 +331,11 @@ class BCIPerformancePredictor:
         scaler_path = output_path / 'feature_scaler.pkl'
         joblib.dump(self.scalers['feature_scaler'], scaler_path)
         print(f"Saved feature scaler to {scaler_path}")
+
+        # Save feature selector
+        selector_path = output_path / 'feature_selector.pkl'
+        joblib.dump(self.scalers['feature_selector'], selector_path)
+        print(f"Saved feature selector to {selector_path}")
 
     def save_results(self, results: Dict, output_path: str, subject_ids: List[int]):
         """
@@ -418,9 +442,10 @@ def main():
     print("\n" + "="*60)
     print("Training Complete!")
     print("="*60)
-    print("\nNote: R² scores are expected to be lower (0.5-0.8) compared to the")
-    print("previous implementation because we're now doing TRUE early prediction")
-    print("from only the first 15 trials, not using information from all trials.")
+    print("\nNote: This uses merged features from Phase 2 early trials + EEG-Project")
+    print("features. Pearson r is now computed out-of-fold (cross-validated) for")
+    print("honest evaluation. Feature selection retains the top features to avoid")
+    print("overfitting with the expanded feature set.")
 
 
 if __name__ == '__main__':

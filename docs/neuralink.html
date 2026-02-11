@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link Interface v1.0 | Neuralink Style Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Roboto+Mono:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/neuralink.css">
+</head>
+
+<body>
+    <div class="overlay-scanlines"></div>
+    <div class="app-container">
+
+        <!-- Header / Status Bar -->
+        <header class="status-bar">
+            <div class="brand">
+                <span class="logo-icon">⦿</span>
+                <span class="logo-text">LINK INTERFACE</span>
+            </div>
+            <div class="status-indicators">
+                <div class="indicator">
+                    <span class="label">BATTERY</span>
+                    <span class="value">98%</span>
+                </div>
+                <div class="indicator">
+                    <span class="label">TEMP</span>
+                    <span class="value">37.1°C</span>
+                </div>
+                <div class="indicator">
+                    <span class="label">SIGNAL</span>
+                    <span class="value good" id="signal-status">STRONG</span>
+                </div>
+                <div class="indicator connection">
+                    <span class="status-dot pulsed" id="connection-dot"></span>
+                    <span class="value" id="connection-text">CONNECTED</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-grid">
+
+            <!-- LEFT COLUMN: The Signal (Raw Data) -->
+            <section class="panel signal-panel">
+                <div class="panel-header">
+                    <h2>NEURAL SPIKES (LFP)</h2>
+                    <span class="channel-id">CH 1-64</span>
+                </div>
+                <div class="viz-container" id="lfp-container">
+                    <canvas id="lfp-canvas"></canvas>
+                </div>
+                <div class="metrics-row">
+                    <div class="metric">
+                        <span class="m-label">SPIKE RATE</span>
+                        <span class="m-value monospace" id="spike-rate">0 Hz</span>
+                    </div>
+                    <div class="metric">
+                        <span class="m-label">SNR</span>
+                        <span class="m-value monospace" id="snr-value">0.0 dB</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CENTER COLUMN: The Model (Decoder) -->
+            <section class="panel decoder-panel">
+                <div class="brain-viz">
+                    <div class="brain-model-container">
+                        <!-- CSS/SVG Brain or Chip representation -->
+                        <div class="implant-graphic">
+                            <div class="implant-body"></div>
+                            <div class="implant-threads"></div>
+                        </div>
+                    </div>
+                    <div class="decoding-ring">
+                        <div class="ring-track"></div>
+                        <div class="ring-fill" id="decoder-ring-fill"></div>
+                        <div class="center-readout">
+                            <span class="readout-label">INTENT</span>
+                            <span class="readout-value" id="intent-text">IDLE</span>
+                            <span class="readout-conf monospace" id="intent-conf">0.0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="probability-bars">
+                    <div class="class-bar">
+                        <span class="class-label">LEFT HAND</span>
+                        <div class="bar-track">
+                            <div class="bar-fill" id="bar-left"></div>
+                        </div>
+                    </div>
+                    <div class="class-bar">
+                        <span class="class-label">RIGHT HAND</span>
+                        <div class="bar-track">
+                            <div class="bar-fill" id="bar-right"></div>
+                        </div>
+                    </div>
+                    <div class="class-bar">
+                        <span class="class-label">REST</span>
+                        <div class="bar-track">
+                            <div class="bar-fill" id="bar-rest"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT COLUMN: The Prediction (Metadata) -->
+            <section class="panel meta-panel">
+                <div class="panel-header">
+                    <h2>PERFORMANCE MODEL</h2>
+                </div>
+                <div class="meta-content">
+                    <div class="prediction-card">
+                        <div class="p-header">PREDICTED ACCURACY</div>
+                        <div class="p-value large monospace" id="pred-accuracy">--%</div>
+                        <div class="p-sub">BASED ON LAST 15 SEC</div>
+                    </div>
+
+                    <div class="prediction-card">
+                        <div class="p-header">ACTUAL ACCURACY</div>
+                        <div class="p-value large monospace" id="act-accuracy">--%</div>
+                        <div class="p-sub">GROUND TRUTH</div>
+                    </div>
+
+                    <div class="console-log" id="console-log">
+                        <div class="log-line">> INITIALIZING LINK...</div>
+                    </div>
+
+                    <div class="controls">
+                        <button id="btn-simulate" class="cyber-btn">
+                            <span class="btn-text">SIMULATE NEW SUBJECT</span>
+                            <div class="btn-glitch"></div>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/neuralink-viz.js"></script>
+    <script src="js/neuralink-controller.js"></script>
+</body>
+
+</html>

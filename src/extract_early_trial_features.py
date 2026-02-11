@@ -72,7 +72,7 @@ class EarlyTrialFeatureExtractor:
         self.motor_channels = ['C3', 'Cz', 'C4']
         
         # CSP parameters
-        self.n_csp_components = 4
+        self.n_csp_components = 8  # Matched to optimized Ground Truth model
         
     def load_subject_data(self, subject_id):
         """
@@ -109,7 +109,10 @@ class EarlyTrialFeatureExtractor:
         # Read and concatenate all runs
         raws = [read_raw_edf(fname, preload=True, verbose=False) for fname in raw_fnames]
         raw = concatenate_raws(raws)
-        
+
+        # Standardize channel names (PhysioNet EDFs have trailing dots like "C3.", "Cz.")
+        eegbci.standardize(raw)
+
         # Apply bandpass filter
         raw.filter(self.fmin, self.fmax, fir_design='firwin', verbose=False)
         
@@ -132,7 +135,7 @@ class EarlyTrialFeatureExtractor:
         
         # Pick only EEG channels
         picks = mne.pick_types(raw.info, meg=False, eeg=True, eog=False, stim=False)
-        
+
         # Epoch the data (task window)
         epochs = mne.Epochs(
             raw, events,
@@ -141,7 +144,7 @@ class EarlyTrialFeatureExtractor:
             baseline=None, preload=True,
             verbose=False
         )
-        
+
         # Epoch baseline data (for ERD/ERS)
         epochs_baseline = mne.Epochs(
             raw, events,
@@ -150,7 +153,10 @@ class EarlyTrialFeatureExtractor:
             baseline=None, preload=True,
             verbose=False
         )
-        
+
+        # Recompute labels from surviving epochs (some may be dropped during epoching)
+        labels = np.where(epochs.events[:, 2] == t1_id, 0, 1)
+
         return epochs, epochs_baseline, labels
     
     def extract_band_power(self, epochs_early, channel_names):
@@ -328,18 +334,20 @@ class EarlyTrialFeatureExtractor:
                 # Average across trials
                 psd_baseline_mean = np.mean(psd_baseline, axis=0)
                 psd_task_mean = np.mean(psd_task, axis=0)
-                
-                # Compute ERD/ERS for mu band
-                mu_mask = (freqs_task >= self.mu_band[0]) & (freqs_task <= self.mu_band[1])
-                baseline_mu = np.mean(psd_baseline_mean[mu_mask])
-                task_mu = np.mean(psd_task_mean[mu_mask])
+
+                # Use separate frequency masks (baseline and task may have different
+                # frequency resolutions due to different epoch lengths)
+                mu_mask_task = (freqs_task >= self.mu_band[0]) & (freqs_task <= self.mu_band[1])
+                mu_mask_base = (freqs_baseline >= self.mu_band[0]) & (freqs_baseline <= self.mu_band[1])
+                baseline_mu = np.mean(psd_baseline_mean[mu_mask_base])
+                task_mu = np.mean(psd_task_mean[mu_mask_task])
                 erdrs_mu = (task_mu - baseline_mu) / (baseline_mu + 1e-10)
                 features[f'erdrs_mu_{ch_name}'] = float(erdrs_mu)
-                
-                # Compute ERD/ERS for beta band
-                beta_mask = (freqs_task >= self.beta_band[0]) & (freqs_task <= self.beta_band[1])
-                baseline_beta = np.mean(psd_baseline_mean[beta_mask])
-                task_beta = np.mean(psd_task_mean[beta_mask])
+
+                beta_mask_task = (freqs_task >= self.beta_band[0]) & (freqs_task <= self.beta_band[1])
+                beta_mask_base = (freqs_baseline >= self.beta_band[0]) & (freqs_baseline <= self.beta_band[1])
+                baseline_beta = np.mean(psd_baseline_mean[beta_mask_base])
+                task_beta = np.mean(psd_task_mean[beta_mask_task])
                 erdrs_beta = (task_beta - baseline_beta) / (baseline_beta + 1e-10)
                 features[f'erdrs_beta_{ch_name}'] = float(erdrs_beta)
         

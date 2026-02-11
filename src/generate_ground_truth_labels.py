@@ -55,19 +55,21 @@ class PhysionetMIGroundTruthGenerator:
         self.random_state = random_state
 
         # PhysionetMI motor imagery runs
-        # Run 4: left hand vs right hand (class 0 vs 1)
-        # Run 8: hands vs feet (class 0 vs 1)
-        # Run 12: left hand vs right hand (class 0 vs 1)
-        self.mi_runs = [4, 8, 12]
+        # Task 1: Left vs Right Hand (Runs 4, 8, 12)
+        # Task 2: Fists vs Feet (Runs 6, 10, 14)
+        self.tasks = {
+            'left_right': [4, 8, 12],
+            'hands_feet': [6, 10, 14]
+        }
 
         # EEG parameters
-        self.tmin, self.tmax = 1.0, 4.0  # Time window for MI (skip first 1s)
-        self.fmin, self.fmax = 7.0, 30.0  # Frequency band (mu + beta)
+        self.tmin, self.tmax = 0.5, 4.0  # Time window for MI (optimized)
+        self.fmin, self.fmax = 8.0, 13.0  # Frequency band (Mu band, optimized)
 
         # CSP parameters
-        self.n_components = 4  # Number of CSP components
+        self.n_components = 8  # Number of CSP components (optimized)
 
-    def load_subject_data(self, subject_id):
+    def load_subject_data(self, subject_id, runs):
         """
         Load and preprocess EEG data for a single subject.
 
@@ -75,6 +77,8 @@ class PhysionetMIGroundTruthGenerator:
         ----------
         subject_id : int
             Subject ID (1-109)
+        runs : list
+            List of run indices to load
 
         Returns
         -------
@@ -88,7 +92,7 @@ class PhysionetMIGroundTruthGenerator:
         raw_fnames = []
 
         # Load motor imagery runs for this subject
-        for run in self.mi_runs:
+        for run in runs:
             try:
                 fnames = eegbci.load_data(subject_id, run, update_path=True)
                 raw_fnames.extend(fnames)
@@ -102,6 +106,9 @@ class PhysionetMIGroundTruthGenerator:
         # Read and concatenate all runs
         raws = [read_raw_edf(fname, preload=True, verbose=False) for fname in raw_fnames]
         raw = concatenate_raws(raws)
+
+        # Standardize channel names (PhysioNet EDFs have trailing dots like "C3.", "Cz.")
+        eegbci.standardize(raw)
 
         # Apply bandpass filter
         raw.filter(self.fmin, self.fmax, fir_design='firwin', verbose=False)
@@ -146,25 +153,34 @@ class PhysionetMIGroundTruthGenerator:
 
         # Get data as numpy array
         X = epochs.get_data()  # (n_trials, n_channels, n_times)
-        y = labels
+        
+        # FIX: Derive labels from epochs.events to handle dropped epochs
+        # This prevents mismatch between X and y length
+        y = np.where(epochs.events[:, 2] == t1_id, 0, 1)
 
         # Store run information (which run each trial came from)
-        run_info = self._get_run_info(events, raw_fnames)
+        run_info = self._get_run_info(events, runs)
 
         return X, y, run_info
 
-    def _get_run_info(self, events, raw_fnames):
+    def _get_run_info(self, events, runs):
         """Get information about which run each trial belongs to."""
         # Simplified: just return run indices
         # In a more sophisticated version, we'd track exact run boundaries
         n_trials = len(events)
-        n_runs = len(self.mi_runs)
-        trials_per_run = n_trials // n_runs
+        n_runs = len(runs)
+        if n_runs > 0:
+            trials_per_run = n_trials // n_runs
+        else:
+            trials_per_run = n_trials # Fallback
 
         run_info = []
         for i in range(n_trials):
-            run_idx = min(i // trials_per_run, n_runs - 1)
-            run_info.append(self.mi_runs[run_idx])
+            if n_runs > 0 and trials_per_run > 0:
+                run_idx = min(i // trials_per_run, n_runs - 1)
+                run_info.append(runs[run_idx])
+            else:
+                run_info.append(0)
 
         return run_info
 
@@ -186,13 +202,13 @@ class PhysionetMIGroundTruthGenerator:
             ('Scaler', StandardScaler()),  # Feature scaling
             ('LDA', LinearDiscriminantAnalysis(
                 solver='lsqr',    # Suitable for high-dimensional data
-                shrinkage='auto'  # Automatic shrinkage estimation
+                shrinkage=0.5     # Regularization (optimized)
             ))
         ])
 
         return pipeline
 
-    def evaluate_subject(self, subject_id):
+    def evaluate_subject(self, subject_id, runs):
         """
         Evaluate decoder performance for a single subject using cross-validation.
 
@@ -200,6 +216,8 @@ class PhysionetMIGroundTruthGenerator:
         ----------
         subject_id : int
             Subject ID (1-109)
+        runs : list
+            List of run indices
 
         Returns
         -------
@@ -208,7 +226,7 @@ class PhysionetMIGroundTruthGenerator:
         """
         try:
             # Load data
-            X, y, run_info = self.load_subject_data(subject_id)
+            X, y, run_info = self.load_subject_data(subject_id, runs)
 
             # Check if we have enough trials
             if len(X) < self.n_folds:
@@ -274,7 +292,8 @@ class PhysionetMIGroundTruthGenerator:
                 'fold_accuracies': [float(acc) for acc in fold_accuracies],
                 'class_accuracies': class_accuracies,
                 'cv_folds': self.n_folds,
-                'runs_used': self.mi_runs,
+                'cv_folds': self.n_folds,
+                'runs_used': runs,
                 'success': True
             }
 
@@ -290,7 +309,7 @@ class PhysionetMIGroundTruthGenerator:
 
     def generate_all_labels(self, output_path='results/ground_truth_labels.json'):
         """
-        Generate ground truth labels for all subjects.
+        Generate ground truth labels for all subjects across both tasks.
 
         Parameters
         ----------
@@ -299,44 +318,88 @@ class PhysionetMIGroundTruthGenerator:
 
         Returns
         -------
-        all_results : list
-            List of result dictionaries for all subjects
+        output : dict
+            Full output dictionary with results for both tasks
         """
         print(f"Generating ground truth labels for {self.n_subjects} subjects...")
         print(f"Using {self.n_folds}-fold stratified cross-validation")
-        print(f"Motor imagery runs: {self.mi_runs}")
         print(f"CSP components: {self.n_components}")
-        print("-" * 60)
+        
+        task_results = {}
+        
+        for task_name, runs in self.tasks.items():
+            print("\n" + "=" * 60)
+            print(f"TASK: {task_name} (Runs: {runs})")
+            print("=" * 60)
+            
+            all_results = []
+            
+            # Process each subject
+            for subject_id in tqdm(range(1, self.n_subjects + 1), desc=f"Processing {task_name}"):
+                results = self.evaluate_subject(subject_id, runs)
 
-        all_results = []
+                if results is not None:
+                    # Rename metric for clarity if needed, but keeping standard
+                    all_results.append(results)
 
-        # Process each subject
-        for subject_id in tqdm(range(1, self.n_subjects + 1), desc="Processing subjects"):
-            print(f"\nSubject {subject_id}/{self.n_subjects}")
-            results = self.evaluate_subject(subject_id)
+                    if results['success']:
+                        pass # Less verbose for individual lines to keep log clean
+                    else:
+                        print(f"  Subject {subject_id} ✗ Failed: {results.get('error', 'Unknown error')}")
 
-            if results is not None:
-                all_results.append(results)
+            # Calculate summary statistics for this task
+            successful_subjects = [r for r in all_results if r['success']]
+            accuracies = [r['accuracy'] for r in successful_subjects]
+            
+            mean_acc = float(np.mean(accuracies)) if accuracies else 0.0
+            std_acc = float(np.std(accuracies)) if accuracies else 0.0
+            
+            print(f"\n{task_name} Summary:")
+            print(f"  Successful: {len(successful_subjects)}/{self.n_subjects}")
+            print(f"  Mean Accuracy: {mean_acc:.3f} ± {std_acc:.3f}")
+            
+            summary = {
+                'total_subjects': self.n_subjects,
+                'successful_subjects': len(successful_subjects),
+                'failed_subjects': self.n_subjects - len(successful_subjects),
+                'mean_accuracy': mean_acc,
+                'std_accuracy': std_acc,
+                'min_accuracy': float(np.min(accuracies)) if accuracies else 0.0,
+                'max_accuracy': float(np.max(accuracies)) if accuracies else 0.0,
+                'median_accuracy': float(np.median(accuracies)) if accuracies else 0.0,
+            }
 
-                if results['success']:
-                    print(f"  ✓ Accuracy: {results['accuracy']:.3f} ± {results['accuracy_std']:.3f}")
-                else:
-                    print(f"  ✗ Failed: {results.get('error', 'Unknown error')}")
+            task_results[task_name] = {
+                'runs': runs,
+                'summary': summary,
+                'subjects': all_results
+            }
 
-        # Calculate summary statistics
-        successful_subjects = [r for r in all_results if r['success']]
-        accuracies = [r['accuracy'] for r in successful_subjects]
+            # SAVE INTERMEDIATE RESULTS
+            # Compile current output with available tasks
+            current_output = {
+                'metadata': {
+                    'generated_at': datetime.now().isoformat(),
+                    'n_subjects': self.n_subjects,
+                    'n_folds': self.n_folds,
+                    'tasks_defined': self.tasks,
+                    'n_csp_components': self.n_components,
+                    'frequency_band': [self.fmin, self.fmax],
+                    'time_window': [self.tmin, self.tmax],
+                    'decoder': 'MetaBCI CSP + sklearn LDA',
+                    'cv_strategy': f'{self.n_folds}-fold stratified cross-validation',
+                },
+                'tasks': task_results
+            }
 
-        summary = {
-            'total_subjects': self.n_subjects,
-            'successful_subjects': len(successful_subjects),
-            'failed_subjects': self.n_subjects - len(successful_subjects),
-            'mean_accuracy': float(np.mean(accuracies)) if accuracies else 0.0,
-            'std_accuracy': float(np.std(accuracies)) if accuracies else 0.0,
-            'min_accuracy': float(np.min(accuracies)) if accuracies else 0.0,
-            'max_accuracy': float(np.max(accuracies)) if accuracies else 0.0,
-            'median_accuracy': float(np.median(accuracies)) if accuracies else 0.0,
-        }
+            # Save to JSON
+            output_path_obj = Path(output_path)
+            output_path_obj.parent.mkdir(parents=True, exist_ok=True)
+            
+            with open(output_path_obj, 'w') as f:
+                json.dump(current_output, f, indent=2)
+            
+            print(f"  Saved intermediate results for '{task_name}' to {output_path_obj.absolute()}")
 
         # Compile final output
         output = {
@@ -344,15 +407,14 @@ class PhysionetMIGroundTruthGenerator:
                 'generated_at': datetime.now().isoformat(),
                 'n_subjects': self.n_subjects,
                 'n_folds': self.n_folds,
-                'mi_runs': self.mi_runs,
+                'tasks_defined': self.tasks,
                 'n_csp_components': self.n_components,
                 'frequency_band': [self.fmin, self.fmax],
                 'time_window': [self.tmin, self.tmax],
                 'decoder': 'MetaBCI CSP + sklearn LDA',
                 'cv_strategy': f'{self.n_folds}-fold stratified cross-validation',
             },
-            'summary': summary,
-            'subjects': all_results
+            'tasks': task_results
         }
 
         # Save to JSON
@@ -363,15 +425,15 @@ class PhysionetMIGroundTruthGenerator:
             json.dump(output, f, indent=2)
 
         print("\n" + "=" * 60)
-        print("SUMMARY")
+        print("OVERALL SUMMARY")
         print("=" * 60)
-        print(f"Successfully processed: {summary['successful_subjects']}/{self.n_subjects} subjects")
-        print(f"Mean accuracy: {summary['mean_accuracy']:.3f} ± {summary['std_accuracy']:.3f}")
-        print(f"Accuracy range: [{summary['min_accuracy']:.3f}, {summary['max_accuracy']:.3f}]")
-        print(f"Median accuracy: {summary['median_accuracy']:.3f}")
+        for task_name, data in task_results.items():
+            summ = data['summary']
+            print(f"{task_name}: {summ['mean_accuracy']:.3f} (n={summ['successful_subjects']})")
+            
         print(f"\nResults saved to: {output_path.absolute()}")
 
-        return all_results
+        return output
 
 
 def main():

@@ -106,6 +106,7 @@ class BCIDemo {
         this.isRunning = true;
         this.sessionStartTime = Date.now();
         this.trialsProcessed = 0;
+        this.updateCounter = 0;
         this.sessionTime = 0;
         this.classificationHistory = [];
 
@@ -236,8 +237,17 @@ class BCIDemo {
             this.confidence = 40 + Math.random() * 30;
         }
 
-        // Add some noise to accuracy
-        this.accuracy = 60 + Math.random() * 35;
+        // Simulate convergence: accuracy starts at 50% (chance level)
+        // and converges toward target over ~15 simulated trials.
+        // Each trial takes ~4 seconds; at 10Hz update rate that's ~40 updates per trial.
+        const targetAccuracy = this.targetAccuracy || 72;
+        const maxTrials = 15;
+        const convergenceRate = Math.min(this.trialsProcessed / maxTrials, 1.0);
+
+        // Noise decreases as more trials are processed
+        const noise = (1 - convergenceRate) * (Math.random() - 0.5) * 20;
+        this.accuracy = 50 + (targetAccuracy - 50) * convergenceRate + noise;
+        this.accuracy = Math.max(40, Math.min(100, this.accuracy));
 
         // Update UI
         this.currentPredictionEl.textContent = this.currentPrediction;
@@ -298,8 +308,9 @@ class BCIDemo {
     }
 
     updateMetrics() {
-        // Update trials count (increment occasionally)
-        if (Math.random() < 0.2) { // 20% chance each update
+        // Increment trial count every ~4 seconds (40 updates at 100ms interval)
+        this.updateCounter = (this.updateCounter || 0) + 1;
+        if (this.updateCounter % 40 === 0) {
             this.trialsProcessed++;
             this.trialsCount.textContent = this.trialsProcessed;
         }

@@ -1,219 +1,220 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ML-Enhanced BCI Demo - BCI Classifier</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Link Interface v1.0 | Neuralink Style Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Roboto+Mono:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/neuralink.css">
 </head>
+
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <div class="nav-brand">
-                <h1>BCI Classifier</h1>
+    <div class="overlay-scanlines"></div>
+    <div class="app-container">
+
+        <!-- Header / Status Bar -->
+        <header class="status-bar">
+            <div class="brand">
+                <a href="index.html"
+                    style="text-decoration: none; display: flex; align-items: center; gap: 10px; color: inherit;">
+                    <span class="logo-icon">⦿</span>
+                    <span class="logo-text">LINK INTERFACE</span>
+                </a>
             </div>
-            <ul class="nav-menu">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="methodology.html">Methodology</a></li>
-                <li><a href="results.html">Results</a></li>
-                <li><a href="ml-demo.html" class="active">ML Demo</a></li>
-                <li><a href="documentation.html">Documentation</a></li>
-            </ul>
-        </div>
-    </nav>
-
-    <header class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <h1 class="hero-title">🤖 ML-Enhanced BCI Performance Prediction</h1>
-                <p class="hero-subtitle">Real-time performance prediction using Gradient Boosting on PhysioNet data</p>
+            <div class="status-indicators">
+                <div class="indicator">
+                    <span class="label">BATTERY</span>
+                    <span class="value">98%</span>
+                </div>
+                <div class="indicator">
+                    <span class="label">TEMP</span>
+                    <span class="value">37.1°C</span>
+                </div>
+                <div class="indicator">
+                    <span class="label">SIGNAL</span>
+                    <span class="value good" id="signal-status">STRONG</span>
+                </div>
+                <div class="indicator connection">
+                    <span class="status-dot pulsed" id="connection-dot"></span>
+                    <span class="value" id="connection-text">CONNECTED</span>
+                </div>
             </div>
-        </div>
-    </header>
+        </header>
 
-    <!-- Real-time BCI Demo Section with ML -->
-    <section class="section section-alt bci-demo-section">
-        <div class="container">
-            <h2 class="section-title">🧠 Real-Time BCI Classification with ML Predictions</h2>
-            <p class="section-description">Experience live motor imagery classification with machine learning performance prediction</p>
+        <main class="main-grid">
 
-            <div class="alert alert-info" style="margin-bottom: 2rem;">
-                <strong>Note:</strong> Make sure the prediction server is running: <code>python src/prediction_server.py</code>
-            </div>
+            <!-- TOP-LEFT: BCI Control Quality Score -->
+            <section class="panel score-panel">
+                <div class="panel-header">
+                    <h2>BCI CONTROL QUALITY</h2>
+                </div>
+                <div class="score-gauge-container">
+                    <canvas id="score-gauge-canvas"></canvas>
+                    <div class="score-overlay">
+                        <span class="score-value monospace" id="score-value">--</span>
+                        <span class="score-tier" id="score-tier">ANALYZING...</span>
+                    </div>
+                </div>
+                <div class="score-context">
+                    <span class="percentile-text" id="percentile-text">Loading population data...</span>
+                    <span class="score-tip" id="score-tip"></span>
+                </div>
+            </section>
 
-            <div class="demo-controls">
-                <div class="control-panel">
-                    <button id="start-demo" class="btn btn-primary demo-btn">
-                        <span class="btn-icon">▶️</span> Start BCI Session
+            <!-- TOP-CENTER: Decoder -->
+            <section class="panel decoder-panel">
+                <div class="brain-viz">
+                    <div class="brain-model-container">
+                        <div class="implant-graphic">
+                            <div class="implant-body"></div>
+                            <div class="implant-threads"></div>
+                        </div>
+                    </div>
+                    <div class="decoding-ring">
+                        <div class="ring-track"></div>
+                        <div class="ring-fill" id="decoder-ring-fill"></div>
+                        <div class="center-readout">
+                            <span class="readout-label">INTENT</span>
+                            <span class="readout-value" id="intent-text">IDLE</span>
+                            <span class="readout-conf monospace" id="intent-conf">0.0%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="probability-bars">
+                    <div class="class-bar">
+                        <span class="class-label">LEFT HAND</span>
+                        <div class="bar-track"><div class="bar-fill" id="bar-left"></div></div>
+                    </div>
+                    <div class="class-bar">
+                        <span class="class-label">RIGHT HAND</span>
+                        <div class="bar-track"><div class="bar-fill" id="bar-right"></div></div>
+                    </div>
+                    <div class="class-bar">
+                        <span class="class-label">REST</span>
+                        <div class="bar-track"><div class="bar-fill" id="bar-rest"></div></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TOP-RIGHT: Signal Quality -->
+            <section class="panel signal-panel">
+                <div class="panel-header">
+                    <h2>SIGNAL QUALITY</h2>
+                </div>
+                <div class="signal-bars-container">
+                    <div class="signal-bar-item">
+                        <div class="sig-bar-header">
+                            <span class="sig-label">LEFT MOTOR (C3)</span>
+                            <span class="sig-strength" id="sig-left-strength">--</span>
+                        </div>
+                        <div class="sig-bar-track"><div class="sig-bar-fill" id="sig-left-fill"></div></div>
+                    </div>
+                    <div class="signal-bar-item">
+                        <div class="sig-bar-header">
+                            <span class="sig-label">RIGHT MOTOR (C4)</span>
+                            <span class="sig-strength" id="sig-right-strength">--</span>
+                        </div>
+                        <div class="sig-bar-track"><div class="sig-bar-fill" id="sig-right-fill"></div></div>
+                    </div>
+                    <div class="signal-bar-item">
+                        <div class="sig-bar-header">
+                            <span class="sig-label">FOCUS QUALITY</span>
+                            <span class="sig-strength" id="sig-focus-strength">--</span>
+                        </div>
+                        <div class="sig-bar-track"><div class="sig-bar-fill" id="sig-focus-fill"></div></div>
+                    </div>
+                </div>
+                <div class="signal-tip" id="signal-tip"></div>
+                <div class="mini-viz-container">
+                    <canvas id="lfp-canvas"></canvas>
+                </div>
+            </section>
+
+            <!-- BOTTOM-LEFT: Estimated Progress -->
+            <section class="panel learning-panel">
+                <div class="panel-header">
+                    <h2>ESTIMATED PROGRESS</h2>
+                    <span class="panel-subtitle">Based on cross-validation performance</span>
+                </div>
+                <div class="learning-stats">
+                    <div class="stat-chip">
+                        <span class="stat-label">IMPROVEMENT</span>
+                        <span class="stat-value monospace" id="improvement-pct">+0%</span>
+                    </div>
+                    <div class="stat-chip">
+                        <span class="stat-label">BEST STREAK</span>
+                        <span class="stat-value monospace" id="best-streak">0</span>
+                    </div>
+                    <div class="stat-chip">
+                        <span class="stat-label">AVG ACCURACY</span>
+                        <span class="stat-value monospace" id="session-avg">--%</span>
+                    </div>
+                </div>
+                <div class="learning-canvas-container">
+                    <canvas id="learning-curve-canvas"></canvas>
+                </div>
+            </section>
+
+            <!-- BOTTOM-CENTER: Population Benchmark -->
+            <section class="panel benchmark-panel">
+                <div class="panel-header">
+                    <h2>POPULATION BENCHMARK</h2>
+                </div>
+                <div class="benchmark-container">
+                    <div class="benchmark-bar-track" id="benchmark-track">
+                        <div class="benchmark-marker" style="left: 21%;">
+                            <span class="marker-line"></span>
+                            <span class="marker-label">BEGINNER</span>
+                        </div>
+                        <div class="benchmark-marker" style="left: 52%;">
+                            <span class="marker-line"></span>
+                            <span class="marker-label">AVERAGE</span>
+                        </div>
+                        <div class="benchmark-marker" style="left: 97%;">
+                            <span class="marker-line"></span>
+                            <span class="marker-label">EXPERT</span>
+                        </div>
+                        <div class="benchmark-user-marker" id="benchmark-user">
+                            <span class="user-dot"></span>
+                            <span class="user-label">YOU</span>
+                        </div>
+                    </div>
+                    <div class="benchmark-text" id="benchmark-text">Select a subject to see ranking</div>
+                </div>
+                <div class="milestones" id="milestones-container"></div>
+            </section>
+
+            <!-- BOTTOM-RIGHT: Controls -->
+            <section class="panel controls-panel">
+                <div class="panel-header">
+                    <h2>SESSION CONTROLS</h2>
+                </div>
+                <div class="controls">
+                    <label class="control-label">SUBJECT DATABASE</label>
+                    <select id="subject-select" class="cyber-select">
+                        <option value="">SELECT SUBJECT...</option>
+                    </select>
+                    <button id="btn-simulate" class="cyber-btn" style="margin-top: 8px;">
+                        <span class="btn-text">RANDOMIZE</span>
+                        <div class="btn-glitch"></div>
                     </button>
-                    <button id="stop-demo" class="btn btn-secondary demo-btn" disabled>
-                        <span class="btn-icon">⏹️</span> Stop Session
-                    </button>
-                    <div class="session-status">
-                        <span class="status-indicator" id="status-indicator"></span>
-                        <span class="status-text" id="status-text">Ready to start</span>
-                    </div>
                 </div>
-            </div>
-
-            <div class="demo-grid">
-                <!-- Brain Wave Visualization -->
-                <div class="demo-card brain-waves">
-                    <h3>🧠 Brain Activity</h3>
-                    <div class="brain-container">
-                        <div class="brain-outline">
-                            <div class="brain-region left-hemisphere">
-                                <div class="activity-dots" id="left-activity"></div>
-                            </div>
-                            <div class="brain-region right-hemisphere">
-                                <div class="activity-dots" id="right-activity"></div>
-                            </div>
-                            <div class="corpus-callosum"></div>
-                        </div>
-                        <div class="brain-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">Left Motor</span>
-                                <span class="stat-value" id="left-power">0.00 µV</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Right Motor</span>
-                                <span class="stat-value" id="right-power">0.00 µV</span>
-                            </div>
-                        </div>
-                    </div>
+                <div class="console-log" id="console-log">
+                    <div class="log-line">> INITIALIZING LINK...</div>
                 </div>
+            </section>
 
-                <!-- Real-time Accuracy Gauge -->
-                <div class="demo-card accuracy-gauge">
-                    <h3>🎯 Classification Accuracy</h3>
-                    <div class="gauge-container">
-                        <div class="gauge">
-                            <div class="gauge-background"></div>
-                            <div class="gauge-fill" id="accuracy-fill"></div>
-                            <div class="gauge-center">
-                                <div class="accuracy-value" id="accuracy-value">0%</div>
-                                <div class="accuracy-label">Accuracy</div>
-                            </div>
-                        </div>
-                        <div class="gauge-stats">
-                            <div class="prediction-history">
-                                <div class="prediction-item">
-                                    <span class="prediction-label">Predicted:</span>
-                                    <span class="prediction-value" id="current-prediction">-</span>
-                                </div>
-                                <div class="prediction-item">
-                                    <span class="prediction-label">Confidence:</span>
-                                    <span class="prediction-value" id="confidence">0%</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        </main>
+    </div>
 
-                <!-- EEG Channel Activity -->
-                <div class="demo-card eeg-channels">
-                    <h3>📊 EEG Channels</h3>
-                    <div class="channels-container">
-                        <div class="channel-grid">
-                            <div class="channel" data-channel="C3">
-                                <div class="channel-label">C3</div>
-                                <div class="channel-bar">
-                                    <div class="channel-fill" id="c3-fill"></div>
-                                </div>
-                                <div class="channel-value" id="c3-value">0.00</div>
-                            </div>
-                            <div class="channel" data-channel="Cz">
-                                <div class="channel-label">Cz</div>
-                                <div class="channel-bar">
-                                    <div class="channel-fill" id="cz-fill"></div>
-                                </div>
-                                <div class="channel-value" id="cz-value">0.00</div>
-                            </div>
-                            <div class="channel" data-channel="C4">
-                                <div class="channel-label">C4</div>
-                                <div class="channel-bar">
-                                    <div class="channel-fill" id="c4-fill"></div>
-                                </div>
-                                <div class="channel-value" id="c4-value">0.00</div>
-                            </div>
-                        </div>
-                        <div class="eeg-waveform">
-                            <canvas id="eeg-canvas" width="300" height="100"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Real-time Metrics -->
-                <div class="demo-card metrics-panel">
-                    <h3>📈 Live Metrics</h3>
-                    <div class="metrics-container">
-                        <div class="metric-item">
-                            <div class="metric-icon">⚡</div>
-                            <div class="metric-info">
-                                <div class="metric-label">Signal Quality</div>
-                                <div class="metric-value" id="signal-quality">Excellent</div>
-                            </div>
-                        </div>
-                        <div class="metric-item">
-                            <div class="metric-icon">🎲</div>
-                            <div class="metric-info">
-                                <div class="metric-label">Trials Processed</div>
-                                <div class="metric-value" id="trials-count">0</div>
-                            </div>
-                        </div>
-                        <div class="metric-item">
-                            <div class="metric-icon">⏱️</div>
-                            <div class="metric-info">
-                                <div class="metric-label">Session Time</div>
-                                <div class="metric-value" id="session-time">00:00</div>
-                            </div>
-                        </div>
-                        <div class="metric-item">
-                            <div class="metric-icon">🔄</div>
-                            <div class="metric-info">
-                                <div class="metric-label">Update Rate</div>
-                                <div class="metric-value" id="update-rate">10 Hz</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Classification History -->
-            <div class="demo-card classification-history">
-                <h3>📝 Classification History</h3>
-                <div class="history-container">
-                    <div class="history-header">
-                        <span>Time</span>
-                        <span>Prediction</span>
-                        <span>Confidence</span>
-                        <span>Accuracy</span>
-                    </div>
-                    <div class="history-list" id="classification-history">
-                        <div class="history-item">
-                            <span class="history-time">--:--:--</span>
-                            <span class="history-prediction">-</span>
-                            <span class="history-confidence">-</span>
-                            <span class="history-accuracy">-</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2026 BCI Classifier Project. Built with MetaBCI, MNE, and Gradient Boosting ML.</p>
-            <p>
-                <a href="https://github.com/Shaheer2492/BCI-Classifer" target="_blank">GitHub Repository</a> |
-                <a href="documentation.html">Documentation</a>
-            </p>
-        </div>
-    </footer>
-
-    <script src="js/main.js"></script>
-    <script src="js/bci-demo.js"></script>
-    <script src="js/bci-demo-ml.js"></script>
+    <!-- Scripts -->
+    <script src="js/neuralink-viz.js"></script>
+    <script src="js/neuralink-controller.js"></script>
 </body>
+
 </html>

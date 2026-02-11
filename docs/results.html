@@ -1,146 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Results - BCI Classifier</title>
-    <link rel="stylesheet" href="css/style.css">
+    <title>Results | BCI Classifier</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Roboto+Mono:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/neuralink.css">
+    <style>
+        /* Table Styles for Dark Mode */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 2px solid var(--grid-line);
+            color: var(--accent-cyan);
+            font-weight: 400;
+            letter-spacing: 1px;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid var(--grid-line);
+            font-family: var(--font-mono);
+        }
+
+        tr:hover td {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--grid-line);
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .action-bar {
+            margin-bottom: 30px;
+            display: flex;
+            gap: 20px;
+        }
+    </style>
 </head>
+
 <body>
-    <nav class="navbar">
-        <div class="container">
-            <div class="nav-brand">
-                <h1>BCI Classifier</h1>
-            </div>
-            <ul class="nav-menu">
-                <li><a href="index.html">Home</a></li>
-                <li><a href="methodology.html">Methodology</a></li>
-                <li><a href="results.html" class="active">Results</a></li>
-                <li><a href="documentation.html">Documentation</a></li>
-            </ul>
-        </div>
-    </nav>
+    <div class="overlay-scanlines"></div>
+    <div class="app-container">
 
-    <header class="hero">
-        <div class="container">
-            <h1 class="hero-title">Results Dashboard</h1>
-            <p class="hero-subtitle">Ground truth labels and performance metrics</p>
-        </div>
-    </header>
+        <nav class="main-nav">
+            <a href="index.html" class="nav-link">Home</a>
+            <a href="ml-demo.html" class="nav-link">Interface</a>
+            <a href="methodology.html" class="nav-link">Methodology</a>
+            <a href="results.html" class="nav-link active">Results</a>
+            <a href="documentation.html" class="nav-link">Docs</a>
+        </nav>
 
-    <section class="section">
-        <div class="container">
-            <h2 class="section-title">Phase 1: Ground Truth Labels</h2>
+        <main class="content-container">
+            <h1>Results Dashboard</h1>
+            <p>Phase 1 Ground Truth Generation & Phase 3 Prediction Metrics.</p>
 
-            <div id="phase1-status" class="alert alert-info">
-                <strong>Status:</strong> Ready to run ground truth label generation.
-                Click "Load Results" below after running the Phase 1 script.
+            <div class="action-bar">
+                <button class="cyber-btn" onclick="loadResults()">LOAD DATA</button>
             </div>
 
-            <div class="results-container">
-                <div style="text-align: center; margin: 2rem 0;">
-                    <button class="btn btn-primary" onclick="loadResults()">Load Results</button>
-                    <button class="btn btn-secondary" onclick="refreshResults()">Refresh Data</button>
-                </div>
-
-                <div id="summary-stats" style="display: none;">
-                    <h3>Summary Statistics</h3>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-value" id="total-subjects">-</div>
-                            <div class="stat-label">Total Subjects</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="mean-accuracy">-</div>
-                            <div class="stat-label">Mean Accuracy</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="median-accuracy">-</div>
-                            <div class="stat-label">Median Accuracy</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-value" id="accuracy-range">-</div>
-                            <div class="stat-label">Accuracy Range</div>
-                        </div>
+            <div id="summary-stats" style="display: none;">
+                <h2>Summary Statistics</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-subjects">-</div>
+                        <div class="stat-label">Total Subjects</div>
                     </div>
-                </div>
-
-                <div id="subject-table-container" style="display: none; margin-top: 2rem;">
-                    <h3>Subject Performance</h3>
-                    <div style="overflow-x: auto;">
-                        <table class="data-table" id="subject-table">
-                            <thead>
-                                <tr>
-                                    <th>Subject ID</th>
-                                    <th>Accuracy</th>
-                                    <th>Std Dev</th>
-                                    <th>Trials</th>
-                                    <th>Channels</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="subject-table-body">
-                                <!-- Data will be loaded here -->
-                            </tbody>
-                        </table>
+                    <div class="stat-card">
+                        <div class="stat-value" id="mean-accuracy">-</div>
+                        <div class="stat-label">Mean Accuracy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="median-accuracy">-</div>
+                        <div class="stat-label">Median Accuracy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="accuracy-range">-</div>
+                        <div class="stat-label">Range</div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
 
-    <section class="section section-alt">
-        <div class="container">
-            <h2 class="section-title">Performance Distribution</h2>
-            <div class="results-container">
-                <div id="distribution-chart">
-                    <p style="text-align: center; color: var(--text-secondary);">
-                        Performance distribution visualization will appear here after loading results.
-                    </p>
+            <div id="subject-table-container" style="display: none;">
+                <h2>Subject Performance</h2>
+                <div style="overflow-x: auto;">
+                    <table id="subject-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>ACCURACY</th>
+                                <th>STD DEV</th>
+                                <th>TRIALS</th>
+                                <th>CHANNELS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subject-table-body">
+                            <!-- Data -->
+                        </tbody>
+                    </table>
                 </div>
             </div>
-        </div>
-    </section>
 
-    <section class="section">
-        <div class="container">
-            <h2 class="section-title">How to Generate Results</h2>
-            <div class="results-container">
-                <h3>Run Phase 1 Script</h3>
-                <div class="code-block">
-                    <code>
-# Navigate to the project directory<br>
-cd /home/user/BCI-Classifer<br>
-<br>
-# Install dependencies (first time only)<br>
-pip install -r requirements.txt<br>
-<br>
-# Run ground truth label generation<br>
-python src/generate_ground_truth_labels.py<br>
-<br>
-# Results will be saved to results/ground_truth_labels.json
-                    </code>
-                </div>
+        </main>
+    </div>
 
-                <div class="alert alert-warning">
-                    <strong>Note:</strong> The first run will download the PhysionetMI dataset (~2.5 GB).
-                    Total processing time: approximately 1-2 hours for all 109 subjects.
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <footer class="footer">
-        <div class="container">
-            <p>&copy; 2026 BCI Classifier Project. Built with MetaBCI and MNE.</p>
-            <p>
-                <a href="https://github.com/Shaheer2492/BCI-Classifer" target="_blank">GitHub Repository</a> |
-                <a href="documentation.html">Documentation</a>
-            </p>
-        </div>
-    </footer>
-
-    <script src="js/main.js"></script>
     <script src="js/results.js"></script>
 </body>
+
 </html>
