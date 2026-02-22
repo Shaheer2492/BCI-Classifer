@@ -1,5 +1,5 @@
 """
-Phase 3: Train Performance Prediction Models
+Train Performance Prediction Models
 ---------------------------------------------
 Train machine learning models to predict BCI decoder performance from early-trial features.
 

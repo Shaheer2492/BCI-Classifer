@@ -1,14 +1,9 @@
 """
-Merge EEG-Project features with Phase 2 early trial features.
+EEG-Project features with early trial features.
 --------------------------------------------------------------
 Combines pre-computed features from Andrew's (spectral entropy, LZC, TAR)
 and Daniel's (RPL, SMR strength, ERD magnitudes) EDA work with the
-Phase 2 early trial features to create an enriched feature set.
-
-Note: Andrew's features use all trials (not just the first 15).
-Daniel's resting-state features (RPL, SMR) come from separate baseline runs
-and have no trial dependency. This is acceptable for initial integration;
-a follow-up step will re-extract Andrew's features for first-15-trials only.
+Phase 2 early trial features to create an enriched feature set. 
 """
 
 import json

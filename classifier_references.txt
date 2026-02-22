@@ -1,0 +1,32 @@
+@article{schalk2004bci2000,
+  title={BCI2000: a general-purpose brain-computer interface (BCI) system},
+  author={Schalk, Gerwin and McFarland, Dennis J and Hinterberger, Thilo and Birbaumer, Niels and Wolpaw, Jonathan R},
+  journal={IEEE Transactions on Biomedical Engineering},
+  volume={51},
+  number={6},
+  pages={1034--1043},
+  year={2004},
+  publisher={IEEE}
+}
+
+@article{blankertz2010neurophysiological,
+  title={Neurophysiological predictor of SMR-based BCI performance},
+  author={Blankertz, Benjamin and Sannelli, Claudia and Halder, Sebastian and Hammer, Eva M and K{\"u}bler, Andrea and M{\"u}ller, Klaus-Robert and Curio, Gabriel and Dickhaus, Thorsten},
+  journal={Neuroimage},
+  volume={51},
+  number={4},
+  pages={1303--1309},
+  year={2010},
+  publisher={Elsevier}
+}
+
+@article{wang2006alpha,
+  title={Alpha and theta rhythm contribution to the resting state EEG in relation to motor imagery performance},
+  author={Wang, Yijun and Hong, Bo and Gao, Xiaorong and Gao, Shangkai},
+  journal={IEEE Transactions on Neural Systems and Rehabilitation Engineering},
+  volume={14},
+  number={2},
+  pages={257--265},
+  year={2006},
+  publisher={IEEE}
+}

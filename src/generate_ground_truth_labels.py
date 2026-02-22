@@ -1,5 +1,5 @@
 """
-Phase 1: Generate Ground Truth Labels
+Generate Ground Truth Labels
 --------------------------------------
 Run MetaBCI CSP+LDA decoder on PhysionetMI dataset to extract
 per-subject accuracy scores for all 109 subjects.
