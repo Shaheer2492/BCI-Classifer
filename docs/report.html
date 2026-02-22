@@ -1,0 +1,1000 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BCI Classifier | Research Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Roboto+Mono:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/neuralink.css">
+
+    <!-- MathJax for rendering LaTeX equations -->
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['\\[', '\\]']],
+                tags: 'ams'
+            },
+            options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+
+    <style>
+        body {
+            overflow: auto;
+            height: auto;
+        }
+
+        /* ── NAV BAR ── */
+        .report-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 200;
+            background: rgba(5, 5, 5, 0.92);
+            backdrop-filter: blur(6px);
+            border-bottom: 1px solid var(--grid-line);
+            padding: 14px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--accent-cyan);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 28px;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.75rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: var(--accent-cyan);
+        }
+
+        /* ── REPORT LAYOUT ── */
+        .report-container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 110px 30px 80px;
+        }
+
+        /* ── HEADER ── */
+        .report-header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding-bottom: 40px;
+            border-bottom: 1px solid var(--grid-line);
+        }
+
+        .report-tag {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--accent-cyan);
+            letter-spacing: 3px;
+            border: 1px solid var(--accent-cyan);
+            padding: 4px 12px;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+        }
+
+        .report-title {
+            font-size: 1.9rem;
+            font-weight: 300;
+            letter-spacing: 1px;
+            line-height: 1.4;
+            color: var(--text-primary);
+            margin-bottom: 28px;
+            border-bottom: none;
+        }
+
+        .author-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px 40px;
+            margin-bottom: 28px;
+        }
+
+        .author-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .author-name {
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            font-weight: 400;
+        }
+
+        .author-email {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: #555;
+        }
+
+        .report-links-bar {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 10px;
+        }
+
+        .report-ext-link {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+            letter-spacing: 1px;
+            transition: color 0.2s;
+        }
+
+        .report-ext-link:hover {
+            color: var(--accent-cyan);
+        }
+
+        /* ── ABSTRACT ── */
+        .abstract-block {
+            background: rgba(0, 255, 204, 0.03);
+            border: 1px solid rgba(0, 255, 204, 0.15);
+            border-left: 3px solid var(--accent-cyan);
+            border-radius: 2px;
+            padding: 24px 28px;
+            margin-bottom: 50px;
+        }
+
+        .abstract-label {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--accent-cyan);
+            letter-spacing: 3px;
+            margin-bottom: 14px;
+            display: block;
+        }
+
+        .abstract-block p {
+            font-size: 0.9rem;
+            line-height: 1.75;
+            color: #aaa;
+            text-align: justify;
+        }
+
+        /* ── SECTION HEADINGS ── */
+        .report-section {
+            margin-bottom: 48px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-primary);
+            border-bottom: 1px solid var(--grid-line);
+            padding-bottom: 10px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+        }
+
+        .section-num {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--accent-cyan);
+        }
+
+        .subsection-title {
+            font-size: 0.95rem;
+            font-weight: 400;
+            letter-spacing: 1px;
+            color: #ccc;
+            margin: 28px 0 12px;
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .subsubsection-title {
+            font-size: 0.85rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            letter-spacing: 1px;
+            margin: 20px 0 8px;
+        }
+
+        /* ── BODY TEXT ── */
+        .report-section p {
+            font-size: 0.875rem;
+            line-height: 1.8;
+            color: #999;
+            margin-bottom: 14px;
+            text-align: justify;
+        }
+
+        .report-section .eq-block {
+            margin: 20px 0;
+            padding: 16px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid #1e1e1e;
+            border-radius: 2px;
+            text-align: center;
+            color: #bbb;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        /* ── FIGURE CARDS ── */
+        .figure-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
+            margin-top: 10px;
+        }
+
+        .figure-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--grid-line);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .figure-card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--grid-line);
+        }
+
+        .figure-num {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--accent-cyan);
+            letter-spacing: 2px;
+            white-space: nowrap;
+        }
+
+        .figure-caption-title {
+            font-size: 0.75rem;
+            color: #888;
+            letter-spacing: 1px;
+        }
+
+        .figure-img-wrap {
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .figure-img-wrap img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 2px;
+            display: block;
+        }
+
+        .figure-caption {
+            padding: 16px 20px;
+            font-size: 0.8rem;
+            line-height: 1.7;
+            color: #666;
+        }
+
+        /* ── STUB SECTIONS ── */
+        .stub-placeholder {
+            padding: 30px;
+            border: 1px dashed #222;
+            border-radius: 4px;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: #333;
+            letter-spacing: 1px;
+        }
+
+        /* ── REFERENCES ── */
+        .references-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .references-list li {
+            font-size: 0.78rem;
+            line-height: 1.6;
+            color: #555;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .references-list li::before {
+            content: '–';
+            position: absolute;
+            left: 0;
+            color: var(--accent-cyan);
+        }
+
+        /* ── TOC ── */
+        .toc-panel {
+            background: var(--panel-bg);
+            border: 1px solid var(--grid-line);
+            border-radius: 4px;
+            padding: 20px 24px;
+            margin-bottom: 50px;
+        }
+
+        .toc-label {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--text-secondary);
+            letter-spacing: 3px;
+            margin-bottom: 14px;
+            display: block;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .toc-list li a {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            text-decoration: none;
+            color: #666;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+            transition: color 0.2s;
+        }
+
+        .toc-list li a:hover {
+            color: var(--accent-cyan);
+        }
+
+        .toc-num {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: #333;
+            min-width: 16px;
+        }
+
+        .toc-sub {
+            padding-left: 24px;
+        }
+
+        .toc-sub a {
+            font-size: 0.75rem !important;
+            color: #444 !important;
+        }
+
+        /* ── SCROLLBAR ── */
+        html {
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-cyan) var(--bg-color);
+        }
+
+        /* ── BACK TO TOP ── */
+        .back-top {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(0, 255, 204, 0.08);
+            border: 1px solid rgba(0, 255, 204, 0.3);
+            color: var(--accent-cyan);
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            padding: 8px 14px;
+            text-decoration: none;
+            border-radius: 2px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 300;
+        }
+
+        .back-top.visible {
+            opacity: 1;
+        }
+
+        .back-top:hover {
+            background: rgba(0, 255, 204, 0.15);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="overlay-scanlines"></div>
+
+    <!-- NAV -->
+    <nav class="report-nav">
+        <a href="index.html" class="nav-brand">BCI Classifier</a>
+        <div class="nav-links">
+            <a href="methodology.html">Methodology</a>
+            <a href="results.html">Results</a>
+            <a href="report.html" class="active">Report</a>
+            <a href="documentation.html">Documentation</a>
+            <a href="ml-demo.html">Demo</a>
+        </div>
+    </nav>
+
+    <div class="report-container">
+
+        <!-- ── HEADER ── -->
+        <div class="report-header">
+            <span class="report-tag">DSC 180B · Research Report</span>
+            <h1 class="report-title">
+                Pre-Screening Motor Imagery BCI Literacy<br>
+                Using Low-Sample EEG-Derived Features
+            </h1>
+            <div class="author-grid">
+                <div class="author-card">
+                    <span class="author-name">Daniel Mansperger</span>
+                    <span class="author-email">dmansperger@ucsd.edu</span>
+                </div>
+                <div class="author-card">
+                    <span class="author-name">Andrew Li</span>
+                    <span class="author-email">anl082@ucsd.edu</span>
+                </div>
+                <div class="author-card">
+                    <span class="author-name">Shaheer Khan</span>
+                    <span class="author-email">shk021@ucsd.edu</span>
+                </div>
+                <div class="author-card">
+                    <span class="author-name">Gabriel Riegner</span>
+                    <span class="author-email">gariegner@ucsd.edu</span>
+                </div>
+                <div class="author-card">
+                    <span class="author-name">Armin Schwartzman</span>
+                    <span class="author-email">armins@ucsd.edu</span>
+                </div>
+            </div>
+            <div class="report-links-bar">
+                <a href="https://github.com/Shaheer2492/BCI-Classifer" class="report-ext-link" target="_blank"
+                    rel="noopener">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+                    </svg>
+                    GitHub Repository
+                </a>
+            </div>
+        </div>
+
+        <!-- ── ABSTRACT ── -->
+        <div class="abstract-block">
+            <span class="abstract-label">Abstract</span>
+            <p>
+                A predictive model is developed to assess Brain-Computer Interface (BCI) compatibility using minimal
+                EEG-derived features, enabling prospective users to determine whether investing time and resources in
+                BCI training is worthwhile. The extracted features come exclusively from resting-state recordings
+                without motor imagery (MI) trials, requiring only minutes of data collection rather than hours or
+                multiple sessions. Key features include resting-state alpha power (8–13 Hz), sensorimotor rhythm (SMR)
+                strength, power spectral entropy (PSE), Lempel-Ziv complexity (LZC), theta/alpha power ratio (TAR),
+                resting higher and lower beta power (20–30 Hz and 13–20 Hz, respectively), individual alpha frequency,
+                and interhemispheric coherence. By investigating these features collectively, we identify intrinsic
+                neural patterns distinguishing BCI-literate from BCI-illiterate individuals, addressing the notion that
+                BCI illiteracy may reflect immutable differences in baseline brain activity. Ground truth BCI
+                performance is evaluated using a Common Spatial Pattern (CSP) decoder applied to the PhysioNet EEG Motor
+                Movement/Imagery Dataset.
+            </p>
+        </div>
+
+        <!-- ── TABLE OF CONTENTS ── -->
+        <div class="toc-panel">
+            <span class="toc-label">Contents</span>
+            <ul class="toc-list">
+                <li><a href="#introduction"><span class="toc-num">1</span> Introduction</a></li>
+                <ul class="toc-sub toc-list">
+                    <li><a href="#context"><span class="toc-num">1.1</span> Context</a></li>
+                    <li><a href="#prior-research"><span class="toc-num">1.2</span> Prior Research</a></li>
+                    <li><a href="#goals"><span class="toc-num">1.3</span> Goals, Relevant Data and Features</a></li>
+                </ul>
+                <li><a href="#methods"><span class="toc-num">2</span> Methods</a></li>
+                <ul class="toc-sub toc-list">
+                    <li><a href="#data-acquisition"><span class="toc-num">2.1</span> Data Acquisition and
+                            Preprocessing</a></li>
+                    <li><a href="#features"><span class="toc-num">2.2</span> Features</a></li>
+                    <li><a href="#dataset-construction"><span class="toc-num">2.3</span> Dataset Construction and
+                            Statistical Analysis</a></li>
+                    <li><a href="#classifier"><span class="toc-num">2.4</span> Classifier</a></li>
+                </ul>
+                <li><a href="#visualizations"><span class="toc-num">3</span> Visualizations</a></li>
+                <li><a href="#results"><span class="toc-num">4</span> Results</a></li>
+                <li><a href="#discussion"><span class="toc-num">5</span> Discussion</a></li>
+                <li><a href="#conclusion"><span class="toc-num">6</span> Conclusion</a></li>
+                <li><a href="#references"><span class="toc-num">7</span> References</a></li>
+            </ul>
+        </div>
+
+        <!-- ══════════════════════════════════════ -->
+        <!-- SECTION 1: INTRODUCTION -->
+        <!-- ══════════════════════════════════════ -->
+        <section class="report-section" id="introduction">
+            <h2 class="section-title"><span class="section-num">01</span> Introduction</h2>
+
+            <h3 class="subsection-title" id="context">1.1 Context</h3>
+            <p>
+                Brain–computer interfaces (BCIs) enable direct communication between neural activity and external
+                devices by translating brain signals into actionable commands. With recent breakthroughs in
+                neurotechnology, electroencephalography (EEG)-based BCIs have emerged as one of the most practical and
+                widely studied approaches due to their safety, relatively low cost, and portability. In particular,
+                motor imagery–based BCIs (MI-BCIs), which decode voluntary modulation of sensorimotor rhythms during
+                imagined movements, have demonstrated substantial potential in assistive technologies such as
+                neuroprosthetic control, communication systems for individuals with paralysis, and motor rehabilitation
+                following neurological injury.
+            </p>
+            <p>
+                Despite these advances, a persistent limitation of MI-BCIs is the substantial inter-subject variability
+                in performance. A significant fraction of users, estimated to be around 20%, fail to achieve reliable
+                control even after training, a phenomenon commonly referred to as <em>BCI illiteracy</em>. As a result,
+                current BCI deployment typically requires lengthy and resource-intensive EEG recording sessions,
+                calibration procedures, and user training phases before determining whether a given individual is
+                compatible with a specific BCI paradigm. This trial-and-error process is costly for researchers and
+                clinicians (up to hundreds or even thousands of dollars) and can be discouraging or emotionally taxing
+                for prospective users.
+            </p>
+
+            <h3 class="subsection-title" id="prior-research">1.2 Prior Research</h3>
+            <p>
+                Although prior research has identified several EEG-derived correlates of MI-BCI performance, such as
+                resting-state alpha power, sensorimotor rhythm (SMR) strength, oscillatory stability, and measures of
+                neural complexity, there is currently no widely adopted method for preliminary assessment of BCI
+                compatibility. Most existing approaches either focus on a single predictor, require extensive task-based
+                data, or evaluate performance only after full BCI calibration. One existing model does exclusively use
+                resting state features but incorporates more extensive data collection and equipment use, as well as
+                additional metrics from the subject. Furthermore, they associated their performance predictions with
+                tasks. Consequently, there remains a critical gap between theoretical predictors of BCI literacy and a
+                practical, low-burden screening tool that can be applied early in the BCI pipeline.
+            </p>
+
+            <h3 class="subsection-title" id="goals">1.3 Goals, Relevant Data and Features</h3>
+            <p>
+                We created a BCI literacy classifier designed to estimate an individual's compatibility with MI-based
+                BCIs using a small set of interpretable EEG-derived features. Rather than replacing a full BCI decoder,
+                our goal is to provide a lightweight, data-efficient pre-screening model that outputs a continuous
+                compatibility score between 0 and 1, reflecting expected MI-BCI performance. The proposed framework
+                integrates multiple complementary features capturing spectral power, oscillatory stability, neural
+                complexity, and hemispheric specialization. These features, all extracted from the resting state,
+                include Lempel–Ziv complexity, alpha power, beta power, power spectral entropy, SMR baseline strength,
+                theta–alpha power ratio, individual alpha frequency, and interhemispheric coherence. Additional metrics
+                related to these features were also extracted and incorporated.
+            </p>
+            <p>
+                By synthesizing these features into a single predictive model and validating it against decoder-derived
+                BCI performance, we aim to reduce the time and data required to assess MI-BCI suitability, improve
+                transparency by quantifying the contribution of individual features to predicted compatibility, and
+                support more informed decision-making for researchers, clinicians, and end users. Ultimately, a reliable
+                preliminary BCI literacy predictor has the potential to streamline experimental design, reduce
+                unnecessary burden on participants, and accelerate the development and deployment of personalized BCI
+                systems.
+            </p>
+        </section>
+
+        <!-- ══════════════════════════════════════ -->
+        <!-- SECTION 2: METHODS -->
+        <!-- ══════════════════════════════════════ -->
+        <section class="report-section" id="methods">
+            <h2 class="section-title"><span class="section-num">02</span> Methods</h2>
+
+            <h3 class="subsection-title" id="data-acquisition">2.1 Data Acquisition and Preprocessing</h3>
+            <p>
+                EEG data were obtained from the PhysioNet EEG Motor Movement/Imagery Dataset, comprising recordings from
+                109 healthy subjects performing motor execution and motor imagery tasks. Each subject completed multiple
+                runs of four experimental paradigms: (1) opening and closing left or right fist, (2) imagining opening
+                and closing left or right fist, (3) opening and closing both fists or both feet, and (4) imagining
+                opening and closing both fists or both feet. EEG signals were recorded using the BCI2000 system at 160
+                Hz sampling rate from 64 electrodes positioned according to the international 10–10 system, with
+                particular focus on motor cortex channels and their surroundings (C3, C4, Cz, FC1, FC2, CP1, CP2).
+            </p>
+            <p>
+                Raw EEG data underwent standard preprocessing using the MNE-Python library. The raw data was mapped to a
+                3D coordinate system via a 10-05 standard montage in anticipation of ICA. Additionally, common average
+                re-referencing was utilized to give voltage readings from EEG channels a more standard reference and
+                minimize noise interference, which is particularly impactful in power calculations. Signals were
+                bandpass filtered between 1.0–40.0 Hz using a finite impulse response (FIR) filter with Hamming window
+                to remove low-frequency drifts and high-frequency noise while preserving motor-related oscillations.
+            </p>
+            <p>
+                For MI task features, the data were segmented into epochs spanning \(-1\) to \(+4\) seconds relative to
+                task cue onset (\(t=0\)), providing a 1-second baseline period and 4 seconds of task execution/imagery.
+                Epochs containing amplitude exceeding \(\pm 100\,\mu\)V were automatically rejected to eliminate
+                artifacts from eye movements, muscle activity, or electrode noise. A minimum of 5 valid epochs per
+                condition was required for subject inclusion in subsequent analyses. For resting state features,
+                continuous recordings from both the eyes-open (R01) and eyes-closed (R02) baselines were utilized,
+                without epoching.
+            </p>
+            <p>
+                To further minimize noise, ICA artifact removal was carried out, filtering for interfering activity from
+                eye blinks and movements. 20 independent components were used to capture artifacts via the Picard
+                method. This process was carried out by identifying activity captured by electrodes right above the eyes
+                (Fp1), as well as those on the sides of the temples (AF7 and AF8), which serve as proxies for the EOG
+                electrodes that were not present in the dataset.
+            </p>
+            <p>
+                To enhance spatial specificity and minimize the impact of nearby electrodes' activity, Laplacian
+                filtering was implemented. For each of our electrodes of interest (C3, C4, Cz, FC1, FC2, CP1, CP2),
+                their readings were filtered by subtracting the mean activity of the closest four surrounding
+                electrodes, resulting in activity in the cortical region being more identifiable.
+            </p>
+
+            <h3 class="subsection-title" id="features">2.2 Features</h3>
+
+            <h4 class="subsubsection-title">2.2.1 Resting Alpha Power and Asymmetry</h4>
+            <p>
+                Alpha band (8–13 Hz) activity has been shown to significantly impact a subject's compatibility with an
+                MI-BCI. The power of the alpha band during resting states over the motor cortex region (channels C3, C4,
+                and Cz) reveals potential sensitivity and stability that will be more apparent in any MI trials or
+                calibration. The eyes-closed baseline was used specifically because alpha waves are strongest during
+                this state. After applying preprocessing, the power spectral density (PSD) was calculated with Welch's
+                method using a window size of 2048 samples (~12.8 seconds at 160 Hz) with 50% overlap. Alpha asymmetry,
+                reflecting the level of hemispheric balance during resting activity, was computed from the C3 and C4
+                electrodes.
+            </p>
+            <p>
+                Resting alpha power relative to total power (RPL) was also extracted, following findings that resting
+                alpha power alone is not sufficient to indicate strong BCI compatibility, and that other frequency bands
+                (particularly the theta band, 4–8 Hz) must also be considered.
+            </p>
+
+            <h4 class="subsubsection-title">2.2.2 Resting Beta Power</h4>
+            <p>
+                The beta band (13–30 Hz) is responsible for rebound during motor imagery. This feature was extracted
+                identically to resting alpha power, with two key differences: the frequency mask was changed to the beta
+                range, and the beta band was split into upper beta (20–30 Hz) and lower beta (13–20 Hz), where PSD was
+                individually computed. This split accounts for the different roles: lower beta is associated with
+                sensorimotor ERD/ERS patterns (the backbone of motor imagery), while upper beta captures the broader
+                state of the motor cortex.
+            </p>
+
+            <h4 class="subsubsection-title">2.2.3 Baseline Sensorimotor (SMR) Strength, IAF, and Aperiodic Exponent</h4>
+            <p>
+                Sensorimotor rhythms (SMR) are oscillations that occur at the alpha/mu (8–13 Hz) and beta (13–30 Hz)
+                frequency bands during movement and motor imagery. We use SMR readings from baseline EEG trials to
+                indicate the relationship between SMR strength and MI-BCI compatibility. Following established methods,
+                motor cortex channels C3 and C4 with Laplacian filtering were selected, and PSD values were converted to
+                decibels (dB). The baseline SMR strength is the measure of power relative to a modeled noise curve,
+                represented by an exponential decay function and a Gaussian curve with two peaks for the mu and beta
+                bands. The total PSD curve is:
+            </p>
+            <div class="eq-block">
+                \[ g(f; \lambda, \mu, \sigma, k) = g_1(f; \lambda, k) + g_2(f; \mu, \sigma, k) \]
+                \[ g_1(f; \lambda, k) = k_1 + \frac{k_2}{f^{\lambda}}, \quad g_2(f; \mu, \sigma, k) =
+                k_3\,\varphi(f;\mu_1,\sigma_1) + k_4\,\varphi(f;\mu_2,\sigma_2) \]
+            </div>
+            <p>
+                where \(\varphi(f;\mu,\sigma)\) denotes the PDF of a normal distribution. The center frequency of the
+                alpha peak (\(\mu_1\)) is the Individual Alpha Frequency (IAF), which can be indicative of MI
+                performance. The peak amplitudes \(k_3\) and \(k_4\) indicate signal magnitude, and \(\lambda\) (the
+                aperiodic exponent) represents cortical excitation-inhibition balance.
+            </p>
+
+            <h4 class="subsubsection-title">2.2.4 Alpha Power Variability</h4>
+            <p>
+                Alpha power variability is computed over two-second windows (one-second overlaps) from the
+                Laplacian-filtered C3 and C4 channels using the eyes-open baseline, measured as the standard deviation
+                or coefficient of variation of these power measurements. Subjects with higher variability may be able to
+                perform MI that can be better translated by a MI-BCI, as greater shifts indicate a greater capability of
+                ERD for MI.
+            </p>
+
+            <h4 class="subsubsection-title">2.2.5 Interhemispheric Coherence</h4>
+            <p>
+                Interhemispheric coherence captures the synchrony of the left and right hemispheres over the motor
+                cortex. Scipy's <code>signal.coherence</code> method was utilized with a Hamming window (2048 samples)
+                between signals from C3 and C4, positioned on opposite hemispheres. Mean coherence was computed within
+                the mu (8–13 Hz), total beta (13–30 Hz), upper beta (20–30 Hz), and lower beta (13–20 Hz) bands. When
+                hemispheres are highly synchronized, a MI-BCI may struggle to identify lateral indicators.
+            </p>
+
+            <h4 class="subsubsection-title">2.2.6 Power Spectral Entropy (PSE)</h4>
+            <p>
+                Power spectral entropy (PSE) quantifies signal complexity in the frequency domain by applying Shannon
+                entropy to the PSD. PSD was computed using Welch's method with 50% overlapping windows, then normalized
+                to form a probability distribution. Spectral entropy \(H\) was calculated as:
+            </p>
+            <div class="eq-block">
+                \[ H = -\sum_{i=1}^{N} p_i \log_2(p_i) \bigg/ \log_2(N) \]
+            </div>
+            <p>
+                where \(p_i\) represents the normalized power at frequency bin \(i\) and \(N\) is the total number of
+                frequency bins, yielding values between 0 (purely periodic signal) and 1 (white noise). PSE was computed
+                separately for alpha (8–13 Hz) and beta (13–30 Hz) bands. The primary feature was \(\Delta H =
+                H_{\text{baseline}} - H_{\text{task}}\), representing entropy modulation during task performance.
+            </p>
+
+            <h4 class="subsubsection-title">2.2.7 Lempel-Ziv Complexity (LZC)</h4>
+            <p>
+                Lempel-Ziv complexity (LZC) measures temporal pattern diversity by counting distinct subsequences as a
+                signal unfolds. Raw EEG signals were bandpass filtered to alpha or beta bands, then binarized using
+                median thresholding (above median = 1, below = 0). The LZ76 algorithm was applied, normalizing by
+                sequence length:
+            </p>
+            <div class="eq-block">
+                \[ \text{LZC} = \frac{c \log_2(n)}{n} \]
+            </div>
+            <p>
+                where \(n\) is the sequence length and \(c\) is the number of distinct substrings. High LZC indicates
+                unpredictable, random-like signals (poor BCI compatibility); low LZC reflects repetitive, stereotyped
+                activity (favorable for BCI decoding). The LZC gap metric—\(\Delta\text{LZC}_{\text{real}} -
+                \Delta\text{LZC}_{\text{imagined}}\)—quantifies the difference in complexity modulation between actual
+                movement and motor imagery; smaller gaps indicate that imagery closely mimics execution, a hallmark of
+                strong BCI literacy.
+            </p>
+
+            <h4 class="subsubsection-title">2.2.8 Theta/Alpha Power Ratio (TAR)</h4>
+            <p>
+                The theta/alpha power ratio (TAR) reflects attentional and cognitive control states relevant to BCI
+                performance. Theta (4–8 Hz) activity is associated with cognitive load, drowsiness, and mind-wandering,
+                while alpha (8–13 Hz) power indexes cortical idling and inhibition. TAR was computed as the ratio of
+                mean theta band power to mean alpha band power. Higher TAR values suggest elevated cognitive load or
+                reduced cortical readiness, potentially hindering motor imagery performance. We computed
+                \(\Delta\text{TAR} = \text{TAR}_{\text{task}} - \text{TAR}_{\text{baseline}}\) to capture task-related
+                modulation.
+            </p>
+
+            <h3 class="subsection-title" id="dataset-construction">2.3 Dataset Construction and Statistical Analysis
+            </h3>
+            <p>
+                All extracted features were organized into a comprehensive dataset with subjects as rows and features as
+                columns. The raw dataset included per-trial values for all three repetitions of each task (Left/Right
+                Fist runs 1–3, Fists/Feet runs 1–3), yielding separate columns for each task-band-feature-condition
+                combination. A final compact dataset comprised \(109 \times 40\) features was constructed, with columns
+                for each task-modulation metric for both imagined and real conditions alongside resting baseline values,
+                along with further subdivisions such as by electrode. Missing values due to insufficient valid epochs
+                (&lt;5 per condition) or preprocessing failures were excluded on a per-subject basis
+                (\(N_{\text{final}}\) ranged from 95–109 depending on feature).
+            </p>
+
+            <h3 class="subsection-title" id="classifier">2.4 Classifier</h3>
+            <p>
+                To establish ground truth BCI performance metrics, we implemented a Common Spatial Patterns (CSP)
+                decoder with Linear Discriminant Analysis (LDA) classification following the MetaBCI framework. The CSP
+                algorithm serves as a spatial filtering technique that maximizes class separability by extracting
+                features that emphasize variance differences between motor imagery conditions while suppressing common
+                noise. For each subject, we selected the top \(k=4\) and bottom \(k=4\) spatial filters ranked by
+                eigenvalue magnitude, yielding 8 CSP components total.
+            </p>
+            <p>
+                Log-variance features were computed from the spatially filtered signals and passed to an LDA classifier
+                with least-squares solver and 0.5 shrinkage regularization to prevent overfitting. This architecture was
+                chosen because CSP-LDA represents the gold standard for motor imagery BCIs, offering interpretable
+                spatial patterns that directly reflect Event-Related Desynchronization/Synchronization (ERD/ERS)
+                phenomena in sensorimotor cortex. We evaluated decoder performance using stratified 5-fold
+                cross-validation within each subject to ensure robust accuracy estimates while preserving class balance
+                across folds.
+            </p>
+        </section>
+
+        <!-- ══════════════════════════════════════ -->
+        <!-- SECTION 3: VISUALIZATIONS -->
+        <!-- ══════════════════════════════════════ -->
+        <section class="report-section" id="visualizations">
+            <h2 class="section-title"><span class="section-num">03</span> Visualizations</h2>
+            <p>
+                To illustrate how our extracted features manifest in EEG recordings, we generated comparative
+                visualizations contrasting subjects with extreme (highest vs. lowest) feature values. These
+                visualizations reveal the neurophysiological signatures distinguishing BCI-literate from BCI-illiterate
+                individuals, providing interpretations of otherwise abstract metrics.
+            </p>
+
+            <div class="figure-grid">
+
+                <!-- Fig 1 -->
+                <div class="figure-card">
+                    <div class="figure-card-header">
+                        <span class="figure-num">FIG 01</span>
+                        <span class="figure-caption-title">Signal Time Series — Motor Imagery Power Spectral
+                            Entropy</span>
+                    </div>
+                    <div class="figure-img-wrap">
+                        <img src="images/entropy.png"
+                            alt="Alpha-band amplitude time series comparing high (S016) and low (S033) motor imagery entropy subjects">
+                    </div>
+                    <div class="figure-caption">
+                        Alpha-band (8–13 Hz) amplitude time series for subjects with high (S016, top) and low (S033,
+                        bottom) motor imagery alpha entropy (\(\Delta H_{\text{imagined}}\)). The time axis spans \(-1\)
+                        to \(+4\) seconds relative to motor imagery cue onset (\(t=0\), marked by vertical dashed line),
+                        with amplitude measured in volts. The high-entropy subject (S016) exhibits irregular, volatile
+                        oscillations with frequent amplitude excursions and minimal repetitive structure, indicating a
+                        noisy, unpredictable signal that impedes BCI control. In contrast, the low-entropy subject
+                        (S033) displays more regular oscillations with smoother amplitude envelopes and clearer
+                        quasi-periodic structure — facilitating reliable classification. This difference validates
+                        entropy as a meaningful marker of BCI compatibility.
+                    </div>
+                </div>
+
+                <!-- Fig 2 -->
+                <div class="figure-card">
+                    <div class="figure-card-header">
+                        <span class="figure-num">FIG 02</span>
+                        <span class="figure-caption-title">Recurrence Pattern — Motor Imagery Lempel-Ziv
+                            Complexity</span>
+                    </div>
+                    <div class="figure-img-wrap">
+                        <img src="images/lzc_imagined.png"
+                            alt="Recurrence matrices for high (S096) and low (S101) motor imagery LZC subjects">
+                    </div>
+                    <div class="figure-caption">
+                        Recurrence matrices for alpha-band signals from subjects with high (S096, left) and low (S101,
+                        right) motor imagery Lempel-Ziv complexity (LZC). Recurrence plots visualize temporal
+                        self-similarity: dark regions indicate time points where the signal revisits similar states,
+                        while light regions denote unique, non-recurring patterns. The high-LZC subject (S096) exhibits
+                        a diffuse, scattered recurrence pattern with few coherent structures — the signal rarely
+                        revisits previous states, reflecting high unpredictability that impedes BCI decoding. The
+                        low-LZC subject (S101) displays more prominent diagonal lines and localized block structures,
+                        signifying stronger temporal self-similarity and consistent motor imagery patterns — a desirable
+                        trait for BCI control.
+                    </div>
+                </div>
+
+                <!-- Fig 3 -->
+                <div class="figure-card">
+                    <div class="figure-card-header">
+                        <span class="figure-num">FIG 03</span>
+                        <span class="figure-caption-title">Time-Frequency Difference — Real vs. Imagined Alpha LZC
+                            Gap</span>
+                    </div>
+                    <div class="figure-img-wrap">
+                        <img src="images/lzc_gap.png"
+                            alt="Time-frequency representations of real vs imagined movement difference in alpha band for high-gap (S050) and low-gap (S018) subjects">
+                    </div>
+                    <div class="figure-caption">
+                        Time-frequency representations (TFR) of the difference between real movement and imagined
+                        movement in the alpha band (8–13 Hz). The colormap encodes log-ratio power differences: red
+                        indicates regions where real movement exhibits stronger power modulation than imagery, while
+                        blue indicates stronger imagery modulation. The high-gap subject (S050, left) displays extensive
+                        red regions in the 9–11 Hz range during movement (0–4 s), indicating real movement produces
+                        substantial ERD while motor imagery fails to elicit comparable modulation — reflecting poor
+                        imagery fidelity. The low-gap subject (S018, right) shows predominantly blue regions, indicating
+                        motor imagery produces modulation equal to or exceeding real movement, closely mimicking
+                        execution-related neural dynamics — a hallmark of BCI literacy.
+                    </div>
+                </div>
+
+                <!-- Fig 4 -->
+                <div class="figure-card">
+                    <div class="figure-card-header">
+                        <span class="figure-num">FIG 04</span>
+                        <span class="figure-caption-title">Comparison Bar Graph — Theta/Alpha Power Ratio</span>
+                    </div>
+                    <div class="figure-img-wrap">
+                        <img src="images/tar_bar.png"
+                            alt="Theta/alpha power ratio values across motor cortex channels C3, Cz, C4 for high (S086) and low (S003) TAR subjects">
+                    </div>
+                    <div class="figure-caption">
+                        Theta/alpha power ratio (TAR) values across motor cortex channels (C3, Cz, C4) for subjects with
+                        high (S086, red) and low (S003, blue) motor imagery TAR. The high-TAR subject (S086) exhibits
+                        elevated theta/alpha ratios across all channels, indicating heightened cognitive load or
+                        drowsiness during motor imagery — introducing task-irrelevant neural activity that obscures
+                        motor imagery-specific patterns and reducing classification accuracy. The low-TAR subject (S003)
+                        maintains lower ratios, reflecting a relaxed-yet-focused attentional state that allows motor
+                        imagery to produce clear, discriminative neural modulation uncontaminated by attention-related
+                        artifacts. The grouped bar format highlights the consistent TAR elevation in high-TAR subjects,
+                        validating this metric as a marker of BCI-incompatible attentional states.
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════ -->
+        <!-- SECTION 4: RESULTS -->
+        <!-- ══════════════════════════════════════ -->
+        <section class="report-section" id="results">
+            <h2 class="section-title"><span class="section-num">04</span> Results</h2>
+            <div class="stub-placeholder">Results section — in progress</div>
+        </section>
+
+        <!-- ══════════════════════════════════════ -->
+        <!-- SECTION 5: DISCUSSION -->
+        <!-- ══════════════════════════════════════ -->
+        <section class="report-section" id="discussion">
+            <h2 class="section-title"><span class="section-num">05</span> Discussion</h2>
+            <div class="stub-placeholder">Discussion section — in progress</div>
+        </section>
+
+        <!-- ══════════════════════════════════════ -->
+        <!-- SECTION 6: CONCLUSION -->
+        <!-- ══════════════════════════════════════ -->
+        <section class="report-section" id="conclusion">
+            <h2 class="section-title"><span class="section-num">06</span> Conclusion</h2>
+            <div class="stub-placeholder">Conclusion section — in progress</div>
+        </section>
+
+        <!-- ══════════════════════════════════════ -->
+        <!-- SECTION 7: REFERENCES -->
+        <!-- ══════════════════════════════════════ -->
+        <section class="report-section" id="references">
+            <h2 class="section-title"><span class="section-num">07</span> References</h2>
+            <ul class="references-list">
+                <li>Goldberger, A. L., et al. (2000). PhysioBank, PhysioToolkit, and PhysioNet: Components of a new
+                    research resource for complex physiologic signals. <em>Circulation</em>, 101(23), e215–e220.</li>
+                <li>Schalk, G., McFarland, D. J., Hinterberger, T., Birbaumer, N., &amp; Wolpaw, J. R. (2004). BCI2000:
+                    A general-purpose brain-computer interface (BCI) system. <em>IEEE Transactions on Biomedical
+                        Engineering</em>, 51(6), 1034–1043.</li>
+                <li>Blankertz, B., Sannelli, C., Halder, S., Hammer, E. M., Kübler, A., Müller, K. R., et al. (2010).
+                    Neurophysiological predictor of SMR-based BCI performance. <em>NeuroImage</em>, 51(4), 1303–1309.
+                </li>
+                <li>Gramfort, A., et al. (2013). MEG and EEG data analysis with MNE-Python. <em>Frontiers in
+                        Neuroscience</em>, 7, 267.</li>
+                <li>Wang, Y., Wang, R., Gao, X., Hong, B., &amp; Gao, S. (2006). A practical VEP-based brain-computer
+                    interface. <em>IEEE Transactions on Neural Systems and Rehabilitation Engineering</em>, 14(2),
+                    234–240.</li>
+                <li>Ahn, M., &amp; Jun, S. C. (2015). Performance variation in motor imagery brain-computer interface: A
+                    brief review. <em>Journal of Neuroscience Methods</em>, 243, 103–110.</li>
+                <li>Schmidt, R., Herrojo Ruiz, M., Kilavik, B. E., Lundqvist, M., Starr, P. A., &amp; Aron, A. R.
+                    (2019). Beta oscillations in working memory, executive control of movement and thought, and
+                    sensorimotor function. <em>Journal of Neuroscience</em>, 39(42), 8231–8238.</li>
+                <li>Inouye, T., Shinosaki, K., Sakamoto, H., Toi, S., Ukai, S., Iyama, A., et al. (1991). Quantification
+                    of EEG irregularity by use of the entropy of the power spectrum. <em>Electroencephalography and
+                        Clinical Neurophysiology</em>, 79(3), 204–210.</li>
+                <li>Lempel, A., &amp; Ziv, J. (1976). On the complexity of finite sequences. <em>IEEE Transactions on
+                        Information Theory</em>, 22(1), 75–81.</li>
+                <li>Kubota, Y., Sato, W., Murai, T., Toichi, M., Ikeda, A., &amp; Sengoku, A. (2001). Frontal midline
+                    theta rhythm is correlated with cardiac autonomic activities during the performance of an attention
+                    demanding meditation procedure. <em>Brain Research Cognitive Brain Research</em>, 11(2), 281–287.
+                </li>
+                <li>Klimesch, W. (1999). EEG alpha and theta oscillations reflect cognitive and memory performance: A
+                    review and analysis. <em>Brain Research Reviews</em>, 29(2–3), 169–195.</li>
+                <li>Mei, J., et al. (2024). MetaBCI: A new open-source Python package for brain-computer interfaces.
+                    <em>arXiv preprint</em>.</li>
+                <li>Borgheai, S. B., et al. (2024). Predicting BCI performance from resting-state EEG features.
+                    <em>Neurocomputing</em>, 107658.</li>
+                <li>Pfurtscheller, G., &amp; Lopes da Silva, F. H. (1999). Event-related EEG/MEG synchronization and
+                    desynchronization: Basic principles. <em>Clinical Neurophysiology</em>, 110(11), 1842–1857.</li>
+                <li>Neuper, C., Wörtz, M., &amp; Pfurtscheller, G. (2006). ERD/ERS patterns reflecting sensorimotor
+                    activation and deactivation. <em>Progress in Brain Research</em>, 159, 211–222.</li>
+            </ul>
+        </section>
+
+    </div>
+
+    <!-- BACK TO TOP -->
+    <a href="#" class="back-top" id="backTop">↑ TOP</a>
+
+    <script>
+        // Back to top button visibility
+        const backTop = document.getElementById('backTop');
+        window.addEventListener('scroll', () => {
+            backTop.classList.toggle('visible', window.scrollY > 400);
+        });
+    </script>
+</body>
+
+</html>

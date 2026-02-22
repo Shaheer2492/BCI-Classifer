@@ -1,0 +1,193 @@
+% !TEX TS-program = xelatex
+% !BIB TS-program = bibtex
+\documentclass[12pt,letterpaper]{article}
+\usepackage{style/dsc180reportstyle} % import dsc180reportstyle.sty
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Title and Authors
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\title{Pre-Screening Motor Imagery BCI Literacy Using Low-Sample EEG-Derived Features}
+
+\author{Daniel Mansperger \\
+  {\tt dmansperger@ucsd.edu} \\\And
+  Andrew Li \\
+  {\tt anl082@ucsd.edu} \\\And
+  Shaheer Khan \\
+  {\tt shk021@@ucsd.edu} \\\And
+  Gabriel Riegner \\
+  {\tt gariegner@ucsd.edu} \\\And
+  Armin Schwartzman \\
+  {\tt armins@ucsd.edu} \\}
+
+\begin{document}
+\maketitle
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Abstract and Links
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\begin{abstract}
+    A predictive model is developed to assess Brain-Computer Interface (BCI) compatibility using minimal EEG-derived features, enabling prospective users to determine whether investing time and resources in BCI training is worthwhile. The extracted features come exclusively from resting-state recordings without motor imagery (MI) trials, requiring only minutes of data collection rather than hours or multiple sessions. Key features include resting-state alpha power (8--13~Hz), sensorimotor rhythm (SMR) strength, , power spectral entropy (PSE), Lempel-Ziv complexity (LZC), theta/alpha power ratio (TAR), resting higher and lower beta power (20-30 Hz and 13-20 Hz, respectively), individual alpha frequency, and interhemispheric coherence. By investigating these features collectively, we identify intrinsic neural patterns distinguishing BCI-literate from BCI-illiterate individuals, addressing the notion that BCI illiteracy may reflect immutable differences in baseline brain activity. Ground truth BCI performance is evaluated using a Common Spatial Pattern (CSP) decoder applied to the PhysioNet EEG Motor Movement/Imagery Dataset \cite{goldberger2000physiobank, schalk2004bci2000}.
+
+\end{abstract}
+
+
+\begin{center}
+Website: \url{https://github.com/Shaheer2492/BCI-Classifer} \\
+Code: \url{https://github.com/Shaheer2492/BCI-Classifer}
+\url{https://github.com/AL2024UCSD/EEG-Project}
+\end{center}
+
+\maketoc
+\clearpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%% Main Contents
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+\subsection{Context}
+Brain–computer interfaces (BCIs) enable direct communication between neural activity and external devices by translating brain signals into actionable commands. With recent breakthroughs in neurotechnology, electroencephalography (EEG)-based BCIs have emerged as one of the most practical and widely studied approaches due to their safety, relatively low cost, and portability. In particular, motor imagery–based BCIs (MI-BCIs), which decode voluntary modulation of sensorimotor rhythms during imagined movements, have demonstrated substantial potential in assistive technologies such as neuroprosthetic control, communication systems for individuals with paralysis, and motor rehabilitation following neurological injury.
+
+Despite these advances, a persistent limitation of MI-BCIs is the substantial inter-subject variability in performance. A significant fraction of users, estimated to be around 20\% according to \cite{blankertz2010neurophysiological}, fail to achieve reliable control even after training, a phenomenon commonly referred to as BCI illiteracy. As a result, current BCI deployment typically requires lengthy and resource-intensive EEG recording sessions, calibration procedures, and user training phases before determining whether a given individual is compatible with a specific BCI paradigm. This trial-and-error process is costly for researchers and clinicians (up to hundreds or even thousands of dollars) and can be discouraging or emotionally taxing for prospective users. 
+
+\subsection{Prior Research}
+Although prior research has identified several EEG-derived correlates of MI-BCI performance, such as resting-state alpha power, sensorimotor rhythm (SMR) strength, oscillatory stability, and measures of neural complexity, there is currently no widely adopted method for preliminary assessment of BCI compatibility. Most existing approaches either focus on a single predictor, require extensive task-based data, or evaluate performance only after full BCI calibration. One existing model, detailed in \cite{BORGHEAI2024107658}, does exclusively use resting state features but incorporates more extensive data collection and equipment use, as well as additional metrics from the subject. Furthermore, they associated their performance predictions with tasks. Consequently, there remains a critical gap between theoretical predictors of BCI literacy and a practical, low-burden screening tool that can be applied early in the BCI pipeline.
+
+\subsection{Goals, Relevant Data and Features}
+We created a BCI literacy classifier designed to estimate an individual’s compatibility with MI-based BCIs using a small set of interpretable EEG-derived features. Rather than replacing a full BCI decoder, our goal is to provide a lightweight, data-efficient pre-screening model that outputs a continuous compatibility score between 0 and 1, reflecting expected MI-BCI performance. The proposed framework integrates multiple complementary features capturing spectral power, oscillatory stability, neural complexity, and hemispheric specialization. These features, all extracted from the resting state, include Lempel–Ziv complexity, alpha power, beta power, power spectral entropy, SMR baseline strength, theta–alpha power ratio, individual alpha frequency, and interhemispheric coherence. Additional metrics related to these features were also extracted and incorporated.
+
+By synthesizing these features into a single predictive model and validating it against decoder-derived BCI performance, we aim to reduce the time and data required to assess MI-BCI suitability, improve transparency by quantifying the contribution of individual features to predicted compatibility, and support more informed decision-making for researchers, clinicians, and end users. Ultimately, a reliable preliminary BCI literacy predictor has the potential to streamline experimental design, reduce unnecessary burden on participants, and accelerate the development and deployment of personalized BCI systems.
+
+\section{Methods}
+\subsection{Data Acquisition and Preprocessing}
+
+EEG data were obtained from the PhysioNet EEG Motor Movement/Imagery Dataset \cite{goldberger2000physiobank, schalk2004bci2000}, comprising recordings from 109 healthy subjects performing motor execution and motor imagery tasks. Each subject completed multiple runs of four experimental paradigms: (1) opening and closing left or right fist, (2) imagining opening and closing left or right fist, (3) opening and closing both fists or both feet, and (4) imagining opening and closing both fists or both feet. EEG signals were recorded using the BCI2000 system at 160~Hz sampling rate from 64 electrodes positioned according to the international 10--10 system, with particular focus on motor cortex channels and their surroundings (C3, C4, Cz, FC1, FC2, CP1, CP2).
+
+Raw EEG data underwent standard preprocessing using the MNE-Python library \cite{gramfort2013meg}. The raw data was mapped to a 3D coordinate system via a 10-05 standard montage in anticipation of ICA. Additionally, common average re-referencing was utilized to give voltage readings from EEG channels a more standard reference and minimize noise interference, which is particularly impactful in power calculations. Signals were bandpass filtered between 1.0-40.0~Hz using a finite impulse response (FIR) filter with Hamming window to remove low-frequency drifts and high-frequency noise while preserving motor-related oscillations. For MI task features, the data were segmented into epochs spanning $-1$ to $+4$ seconds relative to task cue onset ($t=0$), providing a 1-second baseline period and 4 seconds of task execution/imagery. Epochs containing amplitude exceeding $\pm 100~\mu$V were automatically rejected to eliminate artifacts from eye movements, muscle activity, or electrode noise. A minimum of 5 valid epochs per condition was required for subject inclusion in subsequent analyses. For baseline comparisons, resting-state EEG was extracted from eyes-open recordings and segmented into overlapping 2-second epochs (50\% overlap) to match the temporal resolution of task epochs. For resting state features, continuous recordings from both the eyes-open (R01) and eyes-closed (R02) baselines were utilized, without epoching.
+
+To further minimize noise, ICA artifact removal was carried out, filtering for interfering activity picked up by relevant electrodes including eye blinks and movements. 20 independent components were used to capture artifacts via the Picard method for its stability. This process was carried out by identifying activity captured by electrodes right above the eyes (Fp1), as well as those on the sides of the temples (AF7 and AF8), which serve as proxies for the electrooculography (EOG) electrodes that were not present in the dataset.
+
+To enhance spatial specificity and minimize the impact of nearby electrodes' activity interfering with our channels of interest, Laplacian filtering was implemented. For each of our electrodes of interest (C3, C4, Cz, FC1, FC2, CP1, CP2), their readings were filtered by subtracting the mean activity of the closest four surrounding electrodes, resulting in activity in the cortical region being more identifiable. This process was applied to the extraction of all features except for baseline sensorimotor strength, which only used Laplacian-filtered motor channels C3 and C4, and Lempel-Ziv complexity, to which Laplacian filtering was not applied.
+
+\subsection{Features}
+
+\subsubsection{Resting Alpha Power and Asymmetry}
+
+In their study, \cite{wang2006alpha} argue the significance of alpha band (8-13~Hz) activity on a subject's compatibility with an MI-BCI. This claim is later supported by the work performed by \cite{ahn2013high}. The reason for this relationship is that the power of the alpha band during resting states over the motor cortex region (channels C3, C4, and Cz) reveals potential sensitivity and stability that will be more apparent in any MI trials or calibration.
+
+To extract this feature, we used the eyes-closed baseline runs specifically, because the alpha waves are strongest during this state and can provide more accurate measurements. After applying the preprocessing methods above, the power spectral density (PSD) of our frequency range was calculated with Welch’s method and Scipy’s signal package with a large window size of 2048 to enhance our frequency distribution. Recalling the sampling rate of 160~Hz, windows are approximately 12.8 seconds, which is sufficiently sized to distinguish between the different frequency bands. Windows were overlapped by 50\%, which is conventional and results in a smooth estimate. Using boolean masking, alpha band frequencies were identified, and the PSD was finalized by integrating over the 8-13 Hz frequency range. Taking advantage of these calculations, the alpha power of the C3 and C4 electrodes was extracted for the purpose of computing alpha asymmetry, which reflects the level of hemispheric balance of a subject’s resting activity and suggests how well a MI-BCI will be able to distinguish lateral movement and MI.
+
+Additionally, following the reasoning of \cite{ahn2013high}, resting alpha power alone is not sufficient to indicate strong BCI compatibility, and they make their findings robust by examining the other frequency bands (particularly the theta band, which is 4--8~Hz), suggesting the significance of RPL. As such, after computing the total PSD of the filtered 1.0 to 40~Hz range using the same application of Welch's method, alpha power relative to the total power during the eyes-closed resting state was extracted.
+
+
+\subsubsection{Resting Beta Power}
+
+As mentioned, the beta band is responsible for rebound during motor imagery and includes the frequencies between 13 Hz and 30 Hz \cite{schmidt2019beta}. This feature was extracted identically to resting alpha power, with two key differences. The first being the change of the frequency mask to use the beta range instead of the alpha range, and the second of which being the splitting of the beta band into the upper beta (20-30 Hz) and the lower beta (13-20 Hz) band, where PSD was individually computed. This was done to account for the wide frequency range that the complete beta band accounts for, and because these different ranges account for slightly different neural activity. This means that the upper and lower beta bands contribute differently to the detection of motor imagery, with lower beta being associated with sensorimotor ERD/ERS patterns (which are the backbone of motor imagery), and upper beta capturing the broader state of the motor cortex.
+
+\subsubsection{Baseline Sensorimotor (SMR) Strength, Individual Alpha Frequency (IAF), Alpha and Beta Peaks, and the Aperiodic Exponent}
+
+Motor imagery tends to occur at the alpha/mu (8--13~Hz) frequency band as well as the beta (13--30~Hz) frequency band. Sensorimotor rhythms (SMR) are the oscillations that occur at these bands during movement and motor imagery. While this feature can be extracted from motor imagery trials, we will use the SMR readings from baseline EEG trials in accordance with the aim of our investigation. According to the findings of \cite{blankertz2010neurophysiological}, this will be sufficient in indicating the relationship between SMR strength and MI-BCI compatibility. 
+
+Following the methods utilized in \cite{blankertz2010neurophysiological}, we began by selecting the motor cortex channels C3 and C4 and applying Laplacian filtering to each. As SMR is specifically generated by the motor cortex regions captured by the C3 and C4 electrodes, other channels were omitted, save for the purpose of applying Laplacian filtering to the motor regions. This reduced noise and volume, and isolated local SMR. From here, we separately computed PSD for both the Laplacian filtered C3 and C4 channels with the same specifics as during the extraction of resting alpha power. These PSD values were converted to decibels (dB) to better compress the range of values, and more importantly, be able to better identify the peaks of SMR strength relative to a frequency curve, which is linear in log space.
+
+The process for making the frequency curve is detailed in the paper by \cite{blankertz2010neurophysiological}, and takes advantage of the inverse relationship between frequency and power. This acts as the noise curve, and the baseline SMR strength is the measure of power relative to the noise curve (the difference between the peaks of the power and the noise curve). This is represented by an exponential decay function for the noise floor, and a Gaussian curve with two peaks representing the maximum values for both the mu and beta frequency bands, respectively. We then optimize these two functions to closely match our actual PSD data, and extract the peak heights above the noise floors. This process is done twice, one for each Laplacian-transformed channel. The baseline SMR strength was finally determined by taking the average of these two resulting magnitudes. 
+
+\cite{blankertz2010neurophysiological} represented each PSD curve as a function $g$ of the frequency $f$ utilizing the sum of $g_1$, a model of the noise spectrum, and $g_2$, a model of the peaks in PSD around the alpha and beta frequency ranges, respectively. Below is this representation:
+\begin{align}
+g(f; \lambda, \mu, \sigma, k) &= g_1(f; \lambda, k) + g_2(f; \mu, \sigma, k) \label{eq:g} \\
+g_1(f; \lambda, k) &= k_1 + \frac{k_2}{f^{\lambda}} \label{eq:g1} \\
+g_2(f; \mu, \sigma, k) &= k_3 \varphi(f; \mu_1, \sigma_1) + k_4 \varphi(f; \mu_2, \sigma_2) \label{eq:g2}
+\end{align}
+where $\varphi(f; \mu, \sigma)$ denotes the probability density function of a normal distribution with mean $\mu$ and standard deviation $\sigma$.
+Additional parameters relevant to our extraction include $\mu_1$ and $\mu_2$, which represent the frequencies where the center of the alpha and beta band peaks above the frequency curve are located, respectively. The center frequency of an alpha peak is called the individual alpha frequency (IAF) for the alpha band at a particular electrode, and can be indicative of MI performance; atypical values may necessitate individual BCI tuning. Since values near the boundaries of a frequency band (e.g. very near 8.0 or 13.0 for the alpha range) are unreliable, they were excluded. This phenomenon is fairly common and occurred in around 60\% of our subjects in at least one motor cortex electrode. The peak amplitudes of the alpha and beta frequency bands are recorded by $k_3$ and $k_4$ (respectively) in each electrode, which indicate magnitude of signal and how well ERD can be detected during motor imagery via the suppression (alpha) and rebound (beta) of the signal. Finally, $\lambda$ is referred to as the aperiodic exponent and represents cortical excitation-inhibition balance, which impacts MI-BCI performance. These parameters obtained from fitting provide predictive insights on their own, and were extracted in addition to the baseline SMR strength.
+
+\subsubsection{Alpha Power Variability}
+
+Knowing that power is a variable measurement that changes over time, it is important to capture this change. Starting with the laplacian-filtered motor cortex channels C3 and C4, alpha power variability is computed by computing power spectral density in the same way resting alpha power was computed, though now as an absolute measure in windows rather than relative to total power. These windows covered two-second intervals with one second overlaps. The intention of including this feature is to measure how variable the alpha power is over time, which is measured by the standard deviation or coefficient of variation (the quotient of the standard deviation and the mean) of these power measurements to capture this variability. \cite{e24111556} discusses how MI is accompanied by dynamic activity in the alpha band, which enables ERD. Additionally, the eyes-open baseline was used to compute this feature, which produces more fluctuations in the alpha band due to ongoing visual input. Subjects with higher variability may be able to perform MI that can be better translated by a MI-BCI, as greater shifts indicate a greater capability of ERD for MI.
+
+\subsubsection{Interhemispheric Coherence}
+
+Following the trend of variability indicating different aspects of MI-BCI performance, interhemispheric coherence was extracted to further analyze these trends in subjects. The contributions of coherence are displayed in \cite{10.3389/fnhum.2020.00321}, who discuss findings of coherence being a predictor for MI performance. Interhemispheric coherence is also computed only over the motor cortex regions, and captures the synchrony of the left and right hemispheres. When the hemispheres are in sync and tend to activate similarly or together, even during one-sided motor imagery, a MI-BCI may struggle to identify lateral indicators, leading to it struggling with movement and MI classification of the subject.
+
+To extract interhemispheric coherence, Scipy’s signal.coherence method was utilized with a hamming window and a window size of 2048 samples between the signals from the C3 and C4 electrodes, which are positioned on opposite hemispheres of the motor cortex. Several boolean masks were then constructed for the frequency bands, including mu (8-13 Hz), total beta (13-30 Hz), upper beta (20-30 Hz), and lower beta (13-20 Hz). The mean coherence between the Laplacian filtered C3 and C4 signals was then computed within each frequency band. 
+
+
+\subsubsection{Power Spectral Entropy (PSE)}
+Power spectral entropy (PSE) quantifies signal complexity in the frequency domain by applying Shannon entropy to the power spectral density (PSD) \cite{inouye1991quantification}. For each epoch, PSD was computed using Welch's method with 50\% overlapping windows, then normalized to form a probability distribution. Spectral entropy $H$ was calculated as 
+\begin{equation}
+H = -\sum_{i=1}^{N} p_i \log_2(p_i) \bigg/ \log_2(N),
+\end{equation}
+where $p_i$ represents the normalized power at frequency bin $i$ and $N$ is the total number of frequency bins, yielding values between 0 (purely periodic signal) and 1 (white noise). We computed PSE separately for alpha (8--13~Hz) and beta (13--30~Hz) frequency bands, as these bands are critically involved in motor planning and execution. The primary feature of interest was $\Delta H = H_{\text{baseline}} - H_{\text{task}}$, representing entropy modulation during task performance relative to rest. Negative $\Delta H$ values indicate increased signal complexity during motor imagery (potentially reflecting poor BCI control), while positive values suggest simplified, more predictable neural patterns (favorable for BCI performance). PSE was spatially averaged across all electrodes for each epoch, then temporally averaged across epochs to yield one value per subject per condition.
+
+\subsubsection{Lempel-Ziv Complexity (LZC)}
+Lempel-Ziv complexity (LZC) measures temporal pattern diversity by counting the number of distinct subsequences as a signal unfolds \cite{lempel1976complexity}. Raw EEG signals were first bandpass filtered to alpha or beta bands, then binarized using median thresholding: samples above the median were coded as 1, below as 0. The LZ76 algorithm was applied to the resulting binary sequence, counting $c$ distinct substrings and normalizing by sequence length to yield 
+\begin{equation}
+\text{LZC} = \frac{c \log_2(n)}{n},
+\end{equation}
+where $n$ is the sequence length. High LZC indicates unpredictable, random-like signals with many unique patterns (poor BCI compatibility), while low LZC reflects repetitive, stereotyped neural activity (favorable for BCI decoding) \cite{zhang2001eeg}. Similar to PSE, we calculated $\Delta\text{LZC} = \text{LZC}_{\text{task}} - \text{LZC}_{\text{baseline}}$ for both alpha and beta bands. The LZC gap metric, defined as $\Delta\text{LZC}_{\text{real}} - \Delta\text{LZC}_{\text{imagined}}$, quantifies the difference in complexity modulation between actual movement and motor imagery; smaller gaps indicate that imagery closely mimics execution, a hallmark of strong BCI literacy \cite{zhang2001eeg}.
+
+
+\subsubsection{Theta/Alpha Power Ratio (TAR)}
+The theta/alpha power ratio (TAR) reflects attentional and cognitive control states relevant to BCI performance \cite{kubota2001frontal}. Theta (4--8~Hz) activity is associated with cognitive load, drowsiness, and mind-wandering, while alpha (8--13~Hz) power---particularly the sensorimotor mu rhythm---indexes cortical idling and inhibition. TAR was computed as the ratio of mean theta band power to mean alpha band power, with power calculated via Welch's method from task and baseline epochs. Higher TAR values suggest elevated cognitive load or reduced cortical readiness, potentially hindering motor imagery performance \cite{ahn2013high}. Lower TAR values indicate a relaxed-yet-focused attentional state conducive to BCI control. We computed $\Delta\text{TAR} = \text{TAR}_{\text{task}} - \text{TAR}_{\text{baseline}}$ to capture task-related modulation of this ratio, with negative $\Delta\text{TAR}$ indicating improved attentional focus during motor imagery. TAR was calculated both as a global metric (averaged across all channels) and as a channel-specific metric to identify spatial patterns of attentional modulation over sensorimotor cortex.
+
+\subsection{Dataset Construction and Statistical Analysis}
+All extracted features were organized into a comprehensive dataset with subjects as rows and features as columns. The raw dataset included per-trial values for all three repetitions of each task (Left/Right Fist runs 1--3, Fists/Feet runs 1--3), yielding separate columns for each task-band-feature-condition combination (ex: ``Left/Right Fist 1\_beta\_entropy\_imagined''). We then made a final compact dataset comprised $109 \times 40$ features, with columns for each task-modulation metric for both imagined and real conditions alongside resting baseline values, along with further subdivisions such as by electrode. Missing values due to insufficient valid epochs ($<5$ per condition) or preprocessing failures were excluded on a per-subject basis ($N_{\text{final}}$ ranged from 95--109 depending on feature). All subsequent analyses, including visualization of extreme phenotypes (subjects with highest/lowest feature values) and BCI literacy classification modeling, were performed on this compact dataset.
+
+\subsection{Classifier}
+To establish ground truth BCI performance metrics, we implemented a Common Spatial Patterns (CSP) decoder with Linear Discriminant Analysis (LDA) classification following the MetaBCI framework \cite{mei2024metabci} \cite{schalk2004bci2000}. The CSP algorithm serves as a spatial filtering technique that maximizes class separability by extracting features that emphasize variance differences between motor imagery conditions while suppressing common noise. For each subject, we selected the top k = 4 and bottom k = 4 spatial filters ranked by eigenvalue magnitude, yielding 8 CSP components total. Log-variance features were then computed from the spatially filtered signals and passed to an LDA classifier with least-squares solver and 0.5 shrinkage regularization to prevent overfitting. This architecture was chosen because CSP-LDA represents the gold standard for motor imagery BCIs, offering interpretable spatial patterns that directly reflect Event-Related Desynchronization/Synchronization (ERD/ERS) phenomena in sensorimotor cortex \cite{blankertz2010neurophysiological}. The CSP filters naturally identify the most discriminative spatial patterns for each individual, while LDA's linear decision boundary aligns well with the approximately Gaussian distribution of log-variance features. We evaluated decoder performance using stratified 5-fold cross-validation within each subject to ensure robust accuracy estimates while preserving class balance across folds. This subject-specific modeling approach acknowledges the substantial inter-individual variability in neural signatures and avoids unrealistic transfer learning assumptions, providing ecologically valid ground truth labels for training our downstream BCI literacy predictor. Hyperparameters including frequency band (8–13 Hz mu rhythm)\cite{wang2006alpha} , time window (0.5–4.0 seconds post-cue), and number of CSP components were optimized via grid search on a representative subject subset, balancing model complexity against generalization performance.
+\section{Visualizations}
+To illustrate how our extracted features manifest in EEG recordings, we generated comparative visualizations contrasting subjects with extreme (highest vs. lowest) feature values. These visualizations reveal the neurophysiological signatures distinguishing BCI-literate from BCI-illiterate individuals, providing interpretations of otherwise abstract/difficult to understand metrics.
+\subsection{Fig 1. Signal Time Series Graph: Motor Imagery Power Spectral Entropy}
+\includegraphics[scale=0.65]{entropy.png}
+
+Figure 1 displays alpha-band (8--13~Hz) amplitude time series for subjects with high (S016, top) and low (S033, bottom) motor imagery alpha entropy ($\Delta H_{\text{imagined}}$). The time axis spans $-1$ to $+4$ seconds relative to motor imagery cue onset ($t=0$, marked by vertical dashed line), with amplitude measured in volts. Shared Y-axis scaling enables direct comparison of signal characteristics.
+
+The high-entropy subject (S016) exhibits irregular, volatile oscillations with frequent amplitude excursions and minimal repetitive structure. This pattern reflects high spectral entropy, as the power is diffusely distributed across many frequencies rather than concentrated in narrow bands, indicating a noisy, unpredictable signal \cite{inouye1991quantification}. Such complexity during motor imagery suggests the subject's neural activity lacks the focused, rhythmic modulation characteristic of effective BCI control.
+
+In contrast, the low-entropy subject (S033) displays more regular oscillations with smoother amplitude envelopes and clearer quasi-periodic structure. Lower entropy indicates power is concentrated in fewer dominant frequencies, producing a more predictable, stereotyped signal \cite{inouye1991quantification}. This simplicity during motor imagery facilitates BCI decoding, as classifiers can more reliably extract discriminative patterns from structured signals. This difference between subjects validates entropy as a meaningful marker of BCI compatibility: high task entropy correlates with poor motor imagery control, while low entropy reflects clean, decodable neural modulation.
+
+
+\subsection{Fig 2. Recurrence Pattern Graph: Motor Imagery Lempel-Ziv Complexity}
+\includegraphics[scale=0.6]{lzc_imagined.png}
+Figure 2 presents recurrence matrices for alpha-band signals from subjects with high (S096, left) and low (S101, right) motor imagery Lempel-Ziv complexity (LZC). Recurrence plots visualize temporal self-similarity: dark regions indicate time points where the signal revisits similar states, while light regions denote unique, non-recurring patterns \cite{huang2023eeg}. This representation makes LZC, a measure of pattern diversity, visually interpretable without requiring direct examination of binary sequences.
+
+The high-LZC subject (S096) exhibits a diffuse, scattered recurrence pattern with few coherent structures. Sparse diagonal lines and absence of block formations indicate the signal rarely revisits previous states, reflecting high unpredictability \cite{lempel1976complexity}. Each segment introduces novel patterns, yielding elevated LZC values characteristic of random-like, complex signals. Such randomness during motor imagery impedes BCI decoding, as classifiers cannot identify consistent features across trials.
+
+Conversely, the low-LZC subject (S101) displays slihgtly more prominent diagonal lines and localized block structures (darker shapes and lines), signifying stronger temporal self-similarity. More recurring diagonal streaks indicate the signal periodically returns to similar amplitude configurations, reflecting repetitive, stereotyped neural activity \cite{marwan2007recurrence}. Low LZC in this context suggests the subject generates consistent motor imagery patterns with limited variability, a desirable trait for BCI control. The visual contrast between scattered (high LZC, poor BCI) and structured (low LZC, good BCI) recurrence patterns demonstrates how temporal complexity manifests in neural dynamics, validating LZC as a predictor of BCI literacy.
+
+
+
+\subsection{Fig 3. Time-Frequency Difference Graph: Real vs Imagined Alpha LZC Gap}
+\includegraphics[scale=0.50]{lzc_gap.png}
+Figure 3 displays time-frequency representations (TFR) of the difference between real movement and imagined movement in the alpha band (8--13~Hz). The colormap encodes log-ratio power differences: red indicates regions where real movement exhibits stronger power modulation than imagery, while blue indicates stronger imagery modulation. Subjects with high LZC gap (S050, left) show large discrepancies between execution and imagery, while low-gap subjects (S018, right) exhibit similar patterns for both conditions.
+
+The high-gap subject (S050) displays extensive red regions, particularly in the 9--11 Hz range during the movement period (0--4~s). This indicates real movement produces substantial event-related desynchronization (ERD) in the mu rhythm, whereas motor imagery fails to elicit comparable modulation \cite{pfurtscheller1999event}. The large real-imagined discrepancy suggests this subject's motor imagery does not effectively engage the same neural circuits recruited during execution, reflecting poor imagery fidelity. Such subjects struggle with BCI control because their imagined movements produce weak, inconsistent neural signatures that deviate from the patterns established during calibration with real movements.
+
+In contrast, the low-gap subject (S018) shows predominantly blue regions, indicating motor imagery produces power modulation equal to or exceeding that of real movement. This near-equivalence suggests the subject's imagery vividly activates motor cortex, closely mimicking execution-related neural dynamics \cite{jeannerod2001neural}. Small LZC gaps are a hallmark of BCI literacy: when imagery faithfully replicates execution patterns, decoders trained on real movements generalize well to imagery-based control \cite{neuper2009motor}. The symmetric, shared colorbar across panels ensures fair comparison, revealing that low-gap subjects achieve the neural simulation fidelity necessary for effective BCI operation.
+
+
+
+\subsection{Fig 4. Comparison Bar Graph: Theta/Alpha Power Ratio}
+\includegraphics[scale=0.50]{tar_bar.png}
+Figure 4 presents theta/alpha power ratio (TAR) values across motor cortex channels (C3, Cz, C4) for subjects with high (S086, red) and low (S003, blue) motor imagery TAR. Grouped bars enable direct side-by-side comparison of attentional states during imagery. TAR quantifies the balance between theta (4--8~Hz) activity associated with cognitive load and alpha power reflecting cortical idling \cite{kubota2001frontal}.
+
+The high-TAR subject (S086) exhibits elevated theta/alpha ratios across all channels, indicating heightened cognitive load or drowsiness during motor imagery. Excessive theta power relative to alpha suggests the subject experiences mental effort, distraction, or suboptimal arousal \cite{klimesch1999eeg}. Elevated TAR impairs BCI performance by introducing task-irrelevant neural activity that obscures motor imagery-specific patterns, reducing classification accuracy. The consistently high TAR across channels indicates a global attentional deficit rather than localized dysfunction.
+
+Conversely, the low-TAR subject (S003) maintains lower ratios, reflecting a relaxed-yet-focused attentional state conducive to motor imagery. Reduced theta relative to alpha suggests the subject achieves effortless concentration without excessive cognitive strain \cite{klimesch1997brain}. This optimal arousal state allows motor imagery to produce clear, discriminative neural modulation uncontaminated by attention-related artifacts. The moderate TAR values across channels indicate stable attentional control over sensorimotor cortex, facilitating reliable BCI decoding. The grouped bar format with shared Y-axis highlights the consistent TAR elevation in high-TAR subjects, validating this metric as a marker of BCI-incompatible attentional states.
+
+
+
+\section{Results}
+
+\section{Discussion}
+
+\section{Conclusion}
+
+\makereference
+\bibliography{reference}
+\bibliographystyle{style/dsc180bibstyle}
+
+\end{document}
