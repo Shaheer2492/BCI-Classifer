@@ -183,3 +183,5 @@ MIT License
 ## Contributors
 
 - Shaheer Khan (shk021@ucsd.edu)
+- Andrew Li (anl082@ucsd.edu)
+- Daniel Mansperger (dmansperger@ucsd.edu)
