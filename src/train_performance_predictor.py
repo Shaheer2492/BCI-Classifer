@@ -5,10 +5,12 @@ Train machine learning models to predict BCI decoder performance from early-tria
 
 Implements multiple models:
 - Random Forest
-- Gradient Boosting (XGBoost)
+- Gradient Boosting
 - Support Vector Machine (SVM)
+- Ridge Regression
 
-Uses features extracted from early trials to predict final decoder accuracy.
+Feature selection uses Spearman correlation with permutation tests and
+Benjamini-Hochberg FDR correction (methodology from EDA notebook analysis).
 """
 
 import json
@@ -20,14 +22,17 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor, RandomForestClassifier
 from sklearn.linear_model import Ridge
 from sklearn.svm import SVR
-from sklearn.model_selection import cross_val_score, cross_val_predict, KFold
+from sklearn.model_selection import cross_val_score, cross_val_predict, KFold, LeaveOneOut
 from sklearn.preprocessing import StandardScaler
-from sklearn.feature_selection import SelectKBest, f_regression
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.metrics import (
+    mean_squared_error, mean_absolute_error, r2_score,
+    accuracy_score, confusion_matrix, classification_report,
+)
 from scipy.stats import pearsonr, spearmanr
+from statsmodels.stats.multitest import multipletests
 import joblib
 from tqdm import tqdm
 
@@ -245,7 +250,91 @@ class BCIPerformancePredictor:
 
         return results
 
-    def train_all_models(self, X: np.ndarray, y: np.ndarray) -> Dict:
+    def select_features_spearman_fdr(
+        self, X: np.ndarray, y: np.ndarray,
+        feature_names: List[str] = None, alpha: float = 0.05,
+        n_permutations: int = 5000
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Select features using Spearman correlation with permutation-based
+        p-values and Benjamini-Hochberg FDR correction.
+
+        Methodology adapted from the EDA notebook analysis which demonstrated
+        that this approach produces more statistically rigorous feature sets
+        than univariate f_regression.
+
+        Parameters
+        ----------
+        X : ndarray
+            Feature matrix (n_subjects, n_features)
+        y : ndarray
+            Target values (n_subjects,)
+        feature_names : list, optional
+            Names of features for reporting
+        alpha : float
+            FDR significance threshold (default: 0.05)
+        n_permutations : int
+            Number of permutations for p-value estimation
+
+        Returns
+        -------
+        selected_mask : ndarray of bool
+            Boolean mask of selected features
+        selection_results : ndarray
+            Array of (spearman_r, p_value, fdr_reject) per feature
+        """
+        n_features = X.shape[1]
+        correlations = np.zeros(n_features)
+        p_values = np.zeros(n_features)
+
+        rng = np.random.RandomState(self.random_state)
+
+        for i in range(n_features):
+            rho, _ = spearmanr(X[:, i], y)
+            correlations[i] = rho
+
+            null_distribution = np.zeros(n_permutations)
+            for p in range(n_permutations):
+                y_perm = rng.permutation(y)
+                null_distribution[p], _ = spearmanr(X[:, i], y_perm)
+
+            p_values[i] = np.mean(np.abs(null_distribution) >= np.abs(rho))
+
+        p_values = np.clip(p_values, 1.0 / n_permutations, 1.0)
+
+        reject, pvals_corrected, _, _ = multipletests(
+            p_values, alpha=alpha, method='fdr_bh'
+        )
+
+        min_abs_corr = 0.1
+        selected_mask = reject & (np.abs(correlations) >= min_abs_corr)
+
+        if not np.any(selected_mask):
+            top_k = min(10, n_features)
+            top_indices = np.argsort(np.abs(correlations))[::-1][:top_k]
+            selected_mask[top_indices] = True
+            print(f"  WARNING: No features passed FDR at alpha={alpha}. "
+                  f"Falling back to top {top_k} by |Spearman r|.")
+
+        print(f"\n  Spearman + FDR Feature Selection (alpha={alpha}):")
+        print(f"  {'Feature':<40} {'rho':>8} {'p-raw':>10} {'p-FDR':>10} {'Keep':>6}")
+        print(f"  {'-'*74}")
+
+        for i in range(n_features):
+            name = feature_names[i] if feature_names else f"feature_{i}"
+            keep = "YES" if selected_mask[i] else ""
+            print(f"  {name:<40} {correlations[i]:>8.4f} "
+                  f"{p_values[i]:>10.4f} {pvals_corrected[i]:>10.4f} {keep:>6}")
+
+        n_selected = int(np.sum(selected_mask))
+        print(f"\n  Selected {n_selected}/{n_features} features")
+
+        return selected_mask, np.column_stack([
+            correlations, p_values, pvals_corrected, selected_mask.astype(float)
+        ])
+
+    def train_all_models(self, X: np.ndarray, y: np.ndarray,
+                         feature_names: List[str] = None) -> Dict:
         """
         Train and evaluate all models.
 
@@ -255,6 +344,8 @@ class BCIPerformancePredictor:
             Feature matrix
         y : ndarray
             Target values
+        feature_names : list, optional
+            Feature names for reporting
 
         Returns
         -------
@@ -265,29 +356,118 @@ class BCIPerformancePredictor:
         print("Training Performance Prediction Models")
         print("="*60)
 
-        # Standardize features
         scaler = StandardScaler()
         X_scaled = scaler.fit_transform(X)
         self.scalers['feature_scaler'] = scaler
 
-        # Feature selection to avoid overfitting with many features and few samples
-        n_features_to_select = min(20, X_scaled.shape[1])
-        selector = SelectKBest(score_func=f_regression, k=n_features_to_select)
-        X_scaled = selector.fit_transform(X_scaled, y)
-        self.scalers['feature_selector'] = selector
+        selected_mask, selection_results = self.select_features_spearman_fdr(
+            X_scaled, y, feature_names=feature_names
+        )
+        X_selected = X_scaled[:, selected_mask]
+        self.feature_mask = selected_mask
 
-        selected_mask = selector.get_support()
-        print(f"Feature selection: {n_features_to_select}/{X.shape[1]} features retained")
+        n_selected = int(np.sum(selected_mask))
+        print(f"Feature selection: {n_selected}/{X.shape[1]} features retained "
+              f"(Spearman + permutation + FDR)")
 
-        # Build models
+        if feature_names:
+            kept = [f for f, m in zip(feature_names, selected_mask) if m]
+            self.selected_feature_names = kept
+            print(f"Selected features: {kept}")
+
         models = self.build_models()
 
-        # Train and evaluate each model
         results = {}
         for model_name, model in models.items():
-            model_results = self.evaluate_model(model, X_scaled, y, model_name)
+            model_results = self.evaluate_model(model, X_selected, y, model_name)
             results[model_name] = model_results
             self.models[model_name] = model
+
+        return results
+
+    def train_classifier(
+        self,
+        X_selected: np.ndarray,
+        y: np.ndarray,
+        threshold: float = 0.65,
+    ) -> Dict:
+        """
+        Train a RandomForestClassifier to predict high vs low BCI performers.
+
+        The classifier is evaluated with Leave-One-Out Cross-Validation (LOOCV)
+        to match the methodology used in the EDA notebook.
+
+        Parameters
+        ----------
+        X_selected : ndarray
+            Scaled and feature-selected matrix (n_subjects, n_selected_features)
+        y : ndarray
+            Continuous target accuracies (n_subjects,)
+        threshold : float
+            Decoder accuracy threshold separating high (>=) from low (<) performers
+
+        Returns
+        -------
+        results : dict
+            LOOCV evaluation metrics and per-subject predictions
+        """
+        y_class = (y >= threshold).astype(int)
+        n_high = int(y_class.sum())
+        n_low = int(len(y_class) - n_high)
+
+        print("\n" + "=" * 60)
+        print("Training RF Classifier (High / Low Performer)")
+        print("=" * 60)
+        print(f"  Threshold: {threshold}")
+        print(f"  Class distribution: HIGH={n_high}, LOW={n_low}")
+        print(f"  class_weight: {{0: 2, 1: 1}} (penalize missing low performers 2x)")
+
+        clf = RandomForestClassifier(
+            n_estimators=200,
+            max_depth=4,
+            max_features=10,
+            class_weight={0: 2, 1: 1},
+            random_state=self.random_state,
+            n_jobs=-1,
+        )
+
+        loo = LeaveOneOut()
+        y_pred_loo = np.zeros(len(y_class), dtype=int)
+        y_proba_loo = np.zeros(len(y_class))
+
+        for train_idx, test_idx in loo.split(X_selected):
+            clf.fit(X_selected[train_idx], y_class[train_idx])
+            y_pred_loo[test_idx] = clf.predict(X_selected[test_idx])
+            y_proba_loo[test_idx] = clf.predict_proba(X_selected[test_idx])[:, 1]
+
+        acc = accuracy_score(y_class, y_pred_loo)
+        cm = confusion_matrix(y_class, y_pred_loo)
+        report = classification_report(y_class, y_pred_loo, target_names=["LOW", "HIGH"], output_dict=True)
+
+        print(f"\n  LOOCV Accuracy: {acc:.4f}")
+        print(f"  Confusion Matrix (rows=actual, cols=predicted):")
+        print(f"    {cm}")
+        print(f"  Classification Report:")
+        print(f"    LOW  — precision={report['LOW']['precision']:.3f}  "
+              f"recall={report['LOW']['recall']:.3f}  f1={report['LOW']['f1-score']:.3f}")
+        print(f"    HIGH — precision={report['HIGH']['precision']:.3f}  "
+              f"recall={report['HIGH']['recall']:.3f}  f1={report['HIGH']['f1-score']:.3f}")
+
+        clf.fit(X_selected, y_class)
+        self.models['RF Classifier'] = clf
+
+        results = {
+            'threshold': threshold,
+            'class_distribution': {'HIGH': n_high, 'LOW': n_low},
+            'loocv_accuracy': float(acc),
+            'confusion_matrix': cm.tolist(),
+            'classification_report': {
+                k: v for k, v in report.items() if k not in ('accuracy',)
+            },
+            'predictions': y_pred_loo.tolist(),
+            'probabilities': y_proba_loo.tolist(),
+            'actual_classes': y_class.tolist(),
+        }
 
         return results
 
@@ -308,34 +488,59 @@ class BCIPerformancePredictor:
         best_model = max(results.items(), key=lambda x: x[1]['r2_mean'])
         return best_model[0]
 
-    def save_models(self, output_dir: str):
+    def save_models(self, output_dir: str, classifier_results: Dict = None):
         """
-        Save trained models and scalers.
+        Save trained models, scaler, feature selection mask, and classifier metadata.
 
         Parameters
         ----------
         output_dir : str
             Directory to save models
+        classifier_results : dict, optional
+            LOOCV evaluation results from train_classifier() to persist as metadata
         """
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
-        # Save models
         for model_name, model in self.models.items():
             model_filename = model_name.lower().replace(' ', '_') + '_model.pkl'
             model_path = output_path / model_filename
             joblib.dump(model, model_path)
             print(f"Saved {model_name} to {model_path}")
 
-        # Save scaler
         scaler_path = output_path / 'feature_scaler.pkl'
         joblib.dump(self.scalers['feature_scaler'], scaler_path)
         print(f"Saved feature scaler to {scaler_path}")
 
-        # Save feature selector
         selector_path = output_path / 'feature_selector.pkl'
-        joblib.dump(self.scalers['feature_selector'], selector_path)
-        print(f"Saved feature selector to {selector_path}")
+        joblib.dump(self.feature_mask, selector_path)
+        print(f"Saved feature selection mask to {selector_path}")
+
+        if classifier_results is not None:
+            clf_pkl_path = output_path / 'rf_classifier.pkl'
+            joblib.dump(self.models['RF Classifier'], clf_pkl_path)
+            print(f"Saved RF Classifier to {clf_pkl_path}")
+
+            metadata = {
+                'generated_at': datetime.now().isoformat(),
+                'algorithm': 'RandomForestClassifier',
+                'hyperparameters': {
+                    'n_estimators': 200,
+                    'max_depth': 4,
+                    'max_features': 10,
+                    'class_weight': {0: 2, 1: 1},
+                    'random_state': self.random_state,
+                },
+                'threshold': classifier_results['threshold'],
+                'class_distribution': classifier_results['class_distribution'],
+                'loocv_accuracy': classifier_results['loocv_accuracy'],
+                'confusion_matrix': classifier_results['confusion_matrix'],
+                'classification_report': classifier_results['classification_report'],
+            }
+            meta_path = output_path / 'rf_classifier_metadata.json'
+            with open(meta_path, 'w') as f:
+                json.dump(metadata, f, indent=2)
+            print(f"Saved RF Classifier metadata to {meta_path}")
 
     def save_results(self, results: Dict, output_path: str, subject_ids: List[int]):
         """
@@ -358,7 +563,9 @@ class BCIPerformancePredictor:
                 'n_subjects': len(subject_ids),
                 'n_folds': self.n_folds,
                 'random_state': self.random_state,
-                'best_model': best_model
+                'best_model': best_model,
+                'feature_selection_method': 'spearman_permutation_fdr',
+                'selected_features': getattr(self, 'selected_feature_names', []),
             },
             'models': results,
             'subject_ids': subject_ids
@@ -402,50 +609,58 @@ class BCIPerformancePredictor:
 
 def main():
     """Main execution function."""
-    # Paths
-    features_path = 'src/results/early_trial_features.json'
+    merged_path = 'src/results/early_trial_features_merged.json'
+    base_path = 'src/results/early_trial_features.json'
     ground_truth_path = 'src/results/ground_truth_labels.json'
     output_dir = 'src/results/models'
     results_path = 'src/results/model_evaluation.json'
 
-    # Check if required files exist
-    if not os.path.exists(features_path):
-        print(f"Error: Early trial features not found at {features_path}")
-        print("Please run extract_early_trial_features.py first (Phase 2).")
+    # Prefer merged features (includes resting-state EEG features from EDA analysis)
+    if os.path.exists(merged_path):
+        features_path = merged_path
+        print(f"Using merged features: {merged_path}")
+    elif os.path.exists(base_path):
+        features_path = base_path
+        print(f"Merged features not found, using base: {base_path}")
+    else:
+        print(f"Error: No features file found. Run extract_early_trial_features.py first.")
         return
-    
+
     if not os.path.exists(ground_truth_path):
         print(f"Error: Ground truth file not found at {ground_truth_path}")
         print("Please run generate_ground_truth_labels.py first (Phase 1).")
         return
 
-    # Initialize predictor
     predictor = BCIPerformancePredictor(n_folds=5, random_state=42)
 
-    # Load data (features from early trials, targets from full dataset)
-    X, y, subject_ids = predictor.load_early_trial_features(features_path, ground_truth_path)
+    X, y, subject_ids = predictor.load_early_trial_features(
+        features_path, ground_truth_path
+    )
 
-    # Train all models
-    results = predictor.train_all_models(X, y)
+    with open(features_path, 'r') as f:
+        feature_names = json.load(f)['metadata'].get('feature_names', None)
 
-    # Generate comparison report
+    results = predictor.train_all_models(X, y, feature_names=feature_names)
+
+    X_scaled = predictor.scalers['feature_scaler'].transform(X)
+    X_selected = X_scaled[:, predictor.feature_mask]
+    classifier_results = predictor.train_classifier(X_selected, y, threshold=0.65)
+
     print("\n" + "="*60)
     print("Model Comparison")
     print("="*60)
     comparison_df = predictor.generate_comparison_report(results)
     print(comparison_df.to_string(index=False))
 
-    # Save models and results
-    predictor.save_models(output_dir)
+    predictor.save_models(output_dir, classifier_results=classifier_results)
     predictor.save_results(results, results_path, subject_ids)
 
     print("\n" + "="*60)
     print("Training Complete!")
     print("="*60)
-    print("\nNote: This uses merged features from Phase 2 early trials + EEG-Project")
-    print("features. Pearson r is now computed out-of-fold (cross-validated) for")
-    print("honest evaluation. Feature selection retains the top features to avoid")
-    print("overfitting with the expanded feature set.")
+    print("\nFeature selection: Spearman correlation + permutation tests + FDR")
+    print("(Benjamini-Hochberg). Pearson r is computed out-of-fold for honest")
+    print("evaluation.")
 
 
 if __name__ == '__main__':

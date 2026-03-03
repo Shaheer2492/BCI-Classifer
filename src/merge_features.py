@@ -1,9 +1,13 @@
 """
-EEG-Project features with early trial features.
+Merge EEG-Project features with early trial features.
 --------------------------------------------------------------
-Combines pre-computed features from Andrew's (spectral entropy, LZC, TAR)
-and Daniel's (RPL, SMR strength, ERD magnitudes) EDA work with the
-Phase 2 early trial features to create an enriched feature set. 
+Combines pre-computed features from three sources:
+  1. Phase 2 early trial features (23 task-based features)
+  2. Daniel's EDA features (RPL, SMR strength, ERD magnitudes)
+  3. Andrew's features (spectral entropy, LZC, TAR)
+  4. Resting-state EEG features from Daniel's notebook analysis
+     (rpl_alpha, theta_alpha_ratio, pse_avg) -- statistically validated
+     predictors of BCI performance via Spearman + FDR correction.
 """
 
 import json
@@ -14,23 +18,34 @@ import numpy as np
 import pandas as pd
 
 
-# Features to select from each source
 DANIEL_FEATURES = [
-    'rpl',                  # Resting alpha power level
-    'smr_strength',         # SMR baseline strength
-    'mu_erd_real_C3',       # Strongest ERD indicator
-    'beta_erd_real_C3',     # Beta ERD magnitude
-    'mu_erd_imagined_C3',   # Imagined ERD
+    'rpl',
+    'smr_strength',
+    'mu_erd_real_C3',
+    'beta_erd_real_C3',
+    'mu_erd_imagined_C3',
 ]
 
 ANDREW_FEATURES = [
-    'LRF_beta_entropy_imagined',   # Beta spectral entropy during imagined movement
-    'LRF_beta_lzc_imagined',       # Beta LZC during imagined movement
-    'LRF_beta_lzc_gap',            # Real vs imagined LZC gap
-    'LRF_tar_imagined',            # Theta/alpha ratio during imagined movement
-    'FF_beta_entropy_imagined',    # Same for fists/feet task
-    'FF_beta_lzc_imagined',        # Same for fists/feet task
-    'FF_tar_imagined',             # Same for fists/feet task
+    'LRF_beta_entropy_imagined',
+    'LRF_beta_lzc_imagined',
+    'LRF_beta_lzc_gap',
+    'LRF_tar_imagined',
+    'FF_beta_entropy_imagined',
+    'FF_beta_lzc_imagined',
+    'FF_tar_imagined',
+]
+
+RESTING_STATE_FEATURES_RAW = [
+    'rpl_alpha',
+    'theta_alpha_ratio',
+    'pse_avg',
+]
+
+RESTING_STATE_FEATURES_RENAMED = [
+    'resting_rpl_alpha',
+    'resting_tar',
+    'resting_pse_avg',
 ]
 
 
@@ -45,16 +60,27 @@ def load_eeg_project_csvs(andrew_path, daniel_path):
     andrew_df = pd.read_csv(andrew_path)
     daniel_df = pd.read_csv(daniel_path)
 
-    # Convert subject IDs: "S001" -> 1
     andrew_df['subject_id_int'] = andrew_df['subject_id'].apply(lambda x: int(x[1:]))
     daniel_df['subject_id_int'] = daniel_df['subject_id'].apply(lambda x: int(x[1:]))
 
     return andrew_df, daniel_df
 
 
-def merge_features(features_data, andrew_df, daniel_df):
-    """Merge EEG-Project features into the Phase 2 features structure."""
-    # Build lookup tables for EEG-Project features
+def load_resting_state_features(resting_path):
+    """
+    Load resting-state EEG features identified as significant BCI performance
+    predictors in the EDA notebook (Spearman + permutation tests + FDR).
+
+    Source columns: rpl_alpha, theta_alpha_ratio, pse_avg
+    Renamed to resting_* prefix to avoid collision with Phase 2 features.
+    """
+    df = pd.read_csv(resting_path)
+    df['subject_id_int'] = df['subject_id'].apply(lambda x: int(x[1:]))
+    return df
+
+
+def merge_features(features_data, andrew_df, daniel_df, resting_df=None):
+    """Merge all feature sources into the Phase 2 features structure."""
     andrew_lookup = {}
     for _, row in andrew_df.iterrows():
         sid = row['subject_id_int']
@@ -65,17 +91,30 @@ def merge_features(features_data, andrew_df, daniel_df):
         sid = row['subject_id_int']
         daniel_lookup[sid] = [float(row[col]) for col in DANIEL_FEATURES]
 
-    # Get existing feature names
-    existing_feature_names = features_data['metadata']['feature_names']
-    new_feature_names = existing_feature_names + DANIEL_FEATURES + ANDREW_FEATURES
+    resting_lookup = {}
+    if resting_df is not None:
+        for _, row in resting_df.iterrows():
+            sid = row['subject_id_int']
+            resting_lookup[sid] = [float(row[col]) for col in RESTING_STATE_FEATURES_RAW]
 
-    # Compute medians for imputation (in case of missing subjects)
+    existing_feature_names = features_data['metadata']['feature_names']
+    new_feature_names = (
+        existing_feature_names
+        + DANIEL_FEATURES
+        + ANDREW_FEATURES
+        + RESTING_STATE_FEATURES_RENAMED
+    )
+
     daniel_values = np.array(list(daniel_lookup.values()))
     andrew_values = np.array(list(andrew_lookup.values()))
     daniel_medians = np.median(daniel_values, axis=0).tolist()
     andrew_medians = np.median(andrew_values, axis=0).tolist()
 
-    # Merge features for each subject
+    resting_medians = [0.0] * len(RESTING_STATE_FEATURES_RAW)
+    if resting_lookup:
+        resting_values = np.array(list(resting_lookup.values()))
+        resting_medians = np.median(resting_values, axis=0).tolist()
+
     merged_subjects = []
     n_merged = 0
     n_imputed = 0
@@ -83,21 +122,24 @@ def merge_features(features_data, andrew_df, daniel_df):
     for subject in features_data['subjects']:
         sid = subject['subject_id']
 
-        # Get EEG-Project features (or use medians if subject missing)
         daniel_feats = daniel_lookup.get(sid, daniel_medians)
         andrew_feats = andrew_lookup.get(sid, andrew_medians)
+        resting_feats = resting_lookup.get(sid, resting_medians)
 
-        if sid not in daniel_lookup or sid not in andrew_lookup:
+        if (sid not in daniel_lookup or sid not in andrew_lookup
+                or (resting_lookup and sid not in resting_lookup)):
             n_imputed += 1
 
-        # Handle any NaN values via median imputation
         daniel_feats = [daniel_medians[i] if np.isnan(v) else v
                         for i, v in enumerate(daniel_feats)]
         andrew_feats = [andrew_medians[i] if np.isnan(v) else v
                         for i, v in enumerate(andrew_feats)]
+        resting_feats = [resting_medians[i] if np.isnan(v) else v
+                         for i, v in enumerate(resting_feats)]
 
-        # Append new features to existing feature vector
-        merged_features = subject['features'] + daniel_feats + andrew_feats
+        merged_features = (
+            subject['features'] + daniel_feats + andrew_feats + resting_feats
+        )
 
         merged_subject = dict(subject)
         merged_subject['features'] = merged_features
@@ -105,7 +147,6 @@ def merge_features(features_data, andrew_df, daniel_df):
         merged_subjects.append(merged_subject)
         n_merged += 1
 
-    # Build merged output
     merged_data = {
         'metadata': {
             'generated_at': datetime.now().isoformat(),
@@ -123,11 +164,15 @@ def merge_features(features_data, andrew_df, daniel_df):
                 'phase2_features': len(existing_feature_names),
                 'daniel_features': len(DANIEL_FEATURES),
                 'andrew_features': len(ANDREW_FEATURES),
+                'resting_state_features': len(RESTING_STATE_FEATURES_RENAMED),
             },
             'notes': (
                 "Andrew's features use all trials (not just first 15). "
                 "Daniel's RPL and SMR come from resting-state runs (no trial dependency). "
-                "Daniel's ERD features use movement runs."
+                "Daniel's ERD features use movement runs. "
+                "Resting-state features (rpl_alpha, tar, pse_avg) are from "
+                "Daniel's EDA notebook -- statistically validated predictors "
+                "of BCI performance (Spearman + permutation tests + FDR)."
             )
         },
         'summary': {
@@ -146,21 +191,22 @@ def merge_features(features_data, andrew_df, daniel_df):
 
 def main():
     """Main execution function."""
-    # Paths
     features_path = 'src/results/early_trial_features.json'
     andrew_path = 'EEG-Project/eeg_features_andrew_compact.csv'
     daniel_path = 'EEG-Project/eeg_features_daniel.csv'
+    resting_path = 'EEG-Project/eeg_features.csv'
     output_path = 'src/results/early_trial_features_merged.json'
 
-    # Check files exist
-    for path, name in [(features_path, 'Phase 2 features'),
-                       (andrew_path, "Andrew's features CSV"),
-                       (daniel_path, "Daniel's features CSV")]:
+    for path, name in [
+        (features_path, 'Phase 2 features'),
+        (andrew_path, "Andrew's features CSV"),
+        (daniel_path, "Daniel's features CSV"),
+        (resting_path, "Resting-state features CSV"),
+    ]:
         if not os.path.exists(path):
             print(f"Error: {name} not found at {path}")
             return
 
-    # Load data
     print("Loading Phase 2 early trial features...")
     features_data = load_early_trial_features(features_path)
     existing_n = len(features_data['metadata']['feature_names'])
@@ -172,16 +218,23 @@ def main():
     print(f"  Andrew: {len(andrew_df)} subjects, selecting {len(ANDREW_FEATURES)} features")
     print(f"  Daniel: {len(daniel_df)} subjects, selecting {len(DANIEL_FEATURES)} features")
 
-    # Merge
+    print("Loading resting-state features (from EDA notebook analysis)...")
+    resting_df = load_resting_state_features(resting_path)
+    print(f"  Resting: {len(resting_df)} subjects, selecting "
+          f"{len(RESTING_STATE_FEATURES_RAW)} features")
+
     print("\nMerging features...")
-    merged_data = merge_features(features_data, andrew_df, daniel_df)
+    merged_data = merge_features(features_data, andrew_df, daniel_df, resting_df)
 
     total_features = merged_data['metadata']['n_features']
-    print(f"  Merged: {total_features} total features per subject "
-          f"({existing_n} Phase 2 + {len(DANIEL_FEATURES)} Daniel + {len(ANDREW_FEATURES)} Andrew)")
-    print(f"  Subjects with imputed values: {merged_data['summary']['n_imputed_subjects']}")
+    print(f"  Merged: {total_features} total features per subject")
+    print(f"    Phase 2:       {existing_n}")
+    print(f"    Daniel:        {len(DANIEL_FEATURES)}")
+    print(f"    Andrew:        {len(ANDREW_FEATURES)}")
+    print(f"    Resting-state: {len(RESTING_STATE_FEATURES_RENAMED)}")
+    print(f"  Subjects with imputed values: "
+          f"{merged_data['summary']['n_imputed_subjects']}")
 
-    # Save
     with open(output_path, 'w') as f:
         json.dump(merged_data, f, indent=2)
     print(f"\nSaved merged features to {output_path}")

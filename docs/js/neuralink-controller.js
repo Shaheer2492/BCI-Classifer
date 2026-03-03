@@ -14,6 +14,9 @@ const els = {
     scoreTier: document.getElementById('score-tier'),
     percentileText: document.getElementById('percentile-text'),
     scoreTip: document.getElementById('score-tip'),
+    tierBadgeContainer: document.getElementById('tier-badge-container'),
+    tierBadge: document.getElementById('tier-badge'),
+    tierDescription: document.getElementById('tier-description'),
     // Decoder panel
     intentText: document.getElementById('intent-text'),
     intentConf: document.getElementById('intent-conf'),
@@ -298,6 +301,32 @@ class NeuralinkController {
         els.scoreTier.style.color = tier.color;
 
         els.percentileText.innerText = `Better than ${percentile}% of users`;
+
+        // 1b. Classification Tier Badge (RF Classifier prediction)
+        if (data.classifier_tier) {
+            const ct = data.classifier_tier;
+            const badgeColor = ct.high_performer ? '#00ffcc' : '#ff9933';
+            const confPct = Math.round(ct.confidence * 100);
+            els.tierBadge.innerText = ct.tier;
+            els.tierBadge.style.color = badgeColor;
+            els.tierBadge.style.borderColor = badgeColor;
+            els.tierDescription.innerText = `${confPct}% confidence`;
+            els.tierBadgeContainer.style.display = 'flex';
+        } else if (data.blended_tier) {
+            const tierColors = {
+                'EXPERT': '#00ffcc',
+                'PROFICIENT': '#00ccff',
+                'DEVELOPING': '#ffcc00',
+                'EARLY': '#ff9933'
+            };
+            const badgeTier = data.blended_tier.tier || 'DEVELOPING';
+            const badgeColor = tierColors[badgeTier] || '#888';
+            els.tierBadge.innerText = badgeTier;
+            els.tierBadge.style.color = badgeColor;
+            els.tierBadge.style.borderColor = badgeColor;
+            els.tierDescription.innerText = data.blended_tier.description || '';
+            els.tierBadgeContainer.style.display = 'flex';
+        }
 
         // 2. Signal Quality Bars
         const sq = computeSignalQuality(data.features);

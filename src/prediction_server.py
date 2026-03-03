@@ -19,20 +19,57 @@ CORS(app)  # Enable CORS for web demo
 # Paths
 MODEL_DIR = Path('src/results/models')
 GROUND_TRUTH_PATH = Path('src/results/ground_truth_labels.json')
-FEATURES_PATH = Path('src/results/early_trial_features.json')
+_MERGED_FEATURES = Path('src/results/early_trial_features_merged.json')
+_BASE_FEATURES = Path('src/results/early_trial_features.json')
+FEATURES_PATH = _MERGED_FEATURES if _MERGED_FEATURES.exists() else _BASE_FEATURES
 EVAL_PATH = Path('src/results/model_evaluation.json')
 
 model = None
 scaler = None
 selector = None
+classifier = None
 ground_truth_data = None
 features_data = None
 features_lookup = None  # subject_id -> feature vector
 
+PERFORMANCE_THRESHOLD = 0.65
+
+
+def classify_bci_tier(accuracy):
+    """
+    Classify a subject into a BCI performance tier based on the EDA notebook's
+    binary classification approach (threshold = 65%).
+
+    Returns a tier dict with label, description, and boolean high_performer flag.
+    """
+    if accuracy >= 0.80:
+        return {
+            'tier': 'EXPERT',
+            'description': 'Exceptional BCI control — top-tier neural differentiation',
+            'high_performer': True,
+        }
+    if accuracy >= PERFORMANCE_THRESHOLD:
+        return {
+            'tier': 'PROFICIENT',
+            'description': 'Reliable BCI control above performance threshold',
+            'high_performer': True,
+        }
+    if accuracy >= 0.50:
+        return {
+            'tier': 'DEVELOPING',
+            'description': 'Above chance — BCI patterns emerging',
+            'high_performer': False,
+        }
+    return {
+        'tier': 'EARLY',
+        'description': 'Below chance level — neural patterns not yet differentiated',
+        'high_performer': False,
+    }
+
 
 def load_models():
-    """Load the trained model, scaler, feature selector, and data."""
-    global model, scaler, selector, ground_truth_data, features_data, features_lookup
+    """Load the trained model, scaler, feature selector, classifier, and data."""
+    global model, scaler, selector, classifier, ground_truth_data, features_data, features_lookup
 
     try:
         # Determine best model from evaluation results
@@ -54,6 +91,13 @@ def load_models():
         if selector_path.exists():
             selector = joblib.load(selector_path)
             print(f"Loaded feature selector from {selector_path}")
+
+        clf_path = MODEL_DIR / 'rf_classifier.pkl'
+        if clf_path.exists():
+            classifier = joblib.load(clf_path)
+            print(f"Loaded RF Classifier from {clf_path}")
+        else:
+            print("RF Classifier not found — classifier tier will be unavailable")
 
         # Load ground truth data
         with open(GROUND_TRUTH_PATH, 'r') as f:
@@ -90,6 +134,37 @@ def load_models():
         return False
 
 
+def apply_feature_selection(X_scaled):
+    """Apply feature selection mask or SelectKBest selector to scaled features."""
+    if selector is None:
+        return X_scaled
+    if isinstance(selector, np.ndarray) and selector.dtype == bool:
+        return X_scaled[:, selector]
+    if hasattr(selector, 'transform'):
+        return selector.transform(X_scaled)
+    return X_scaled
+
+
+def classify_subject(features_scaled_selected):
+    """
+    Run the RF Classifier on already-scaled-and-selected features.
+
+    Returns a dict with tier label, confidence, and high_performer flag,
+    or None if the classifier is not loaded.
+    """
+    if classifier is None:
+        return None
+    pred_class = int(classifier.predict(features_scaled_selected)[0])
+    proba = classifier.predict_proba(features_scaled_selected)[0]
+    confidence = float(proba[pred_class])
+    high = pred_class == 1
+    return {
+        'tier': 'HIGH PERFORMER' if high else 'LOW PERFORMER',
+        'high_performer': high,
+        'confidence': round(confidence, 4),
+    }
+
+
 def predict_for_subject(subject_id):
     """Look up pre-computed features and predict for a subject."""
     if subject_id not in features_lookup:
@@ -97,9 +172,8 @@ def predict_for_subject(subject_id):
 
     features = features_lookup[subject_id].reshape(1, -1)
     features_scaled = scaler.transform(features)
-    if selector is not None:
-        features_scaled = selector.transform(features_scaled)
-    return float(model.predict(features_scaled)[0])
+    features_selected = apply_feature_selection(features_scaled)
+    return float(model.predict(features_selected)[0])
 
 
 @app.route('/api/health', methods=['GET'])
@@ -129,9 +203,8 @@ def predict_performance():
         features = np.array(data['features']).reshape(1, -1)
 
         features_scaled = scaler.transform(features)
-        if selector is not None:
-            features_scaled = selector.transform(features_scaled)
-        prediction = model.predict(features_scaled)[0]
+        features_selected = apply_feature_selection(features_scaled)
+        prediction = model.predict(features_selected)[0]
 
         return jsonify({
             'success': True,
@@ -189,20 +262,24 @@ def get_subject_data(subject_id):
     else:
         features_list = list(features)
     
+    classifier_tier = None
     if len(features) > 0 and model is not None:
         try:
-            # Reshape for prediction
             X = np.array(features).reshape(1, -1)
             X_scaled = scaler.transform(X)
-            X_selected = X_scaled
-            if selector is not None:
-                X_selected = selector.transform(X_scaled)
+            X_selected = apply_feature_selection(X_scaled)
             predicted_acc = float(model.predict(X_selected)[0])
+            classifier_tier = classify_subject(X_selected)
         except Exception as e:
             print(f"Prediction error for subject {subject_id}: {e}")
-            predicted_acc = 0.5 # Fallback
-            
-    return jsonify({
+            predicted_acc = 0.5
+
+    blended_acc = (actual_acc * 0.7) + (predicted_acc * 0.3)
+    predicted_tier = classify_bci_tier(predicted_acc)
+    actual_tier = classify_bci_tier(actual_acc)
+    blended_tier = classify_bci_tier(blended_acc)
+
+    response = {
         'success': True,
         'subject_id': int(subject_id),
         'actual_accuracy': actual_acc,
@@ -212,8 +289,15 @@ def get_subject_data(subject_id):
         'n_trials': subject_gt.get('n_trials', 0),
         'n_channels': 64,
         'class_distribution': subject_gt.get('class_distribution', {}),
-        'features': features_list
-    })
+        'features': features_list,
+        'predicted_tier': predicted_tier,
+        'actual_tier': actual_tier,
+        'blended_tier': blended_tier,
+    }
+    if classifier_tier is not None:
+        response['classifier_tier'] = classifier_tier
+
+    return jsonify(response)
 
 
 @app.route('/api/subjects', methods=['GET'])
