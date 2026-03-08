@@ -779,13 +779,25 @@ canvas {
 }
 
 @keyframes toastIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes toastOut {
-    from { opacity: 1; }
-    to { opacity: 0; }
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
 }
 
 /* === CONTROLS PANEL === */
@@ -933,4 +945,57 @@ pre {
 .card-desc {
     font-size: 0.8rem;
     color: var(--text-secondary);
+}
+
+/* Scrollytelling Additions */
+.scrolly-container {
+    width: 100%;
+    margin-top: 50px;
+    position: relative;
+    z-index: 10;
+}
+
+.scroll-section {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 20px;
+}
+
+.scroll-content {
+    max-width: 800px;
+    width: 100%;
+    text-align: left;
+    color: #ccc;
+    font-size: 1.1rem;
+    line-height: 1.8;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 40px;
+    border: 1px solid var(--grid-line);
+    border-radius: 8px;
+    opacity: 0.2;
+    transform: translateY(30px);
+    transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+    backdrop-filter: blur(5px);
+}
+
+.scroll-section.active .scroll-content {
+    opacity: 1;
+    transform: translateY(0);
+    border-color: var(--accent-cyan);
+    box-shadow: 0 0 20px rgba(0, 255, 204, 0.1);
+    color: var(--text-primary);
+}
+
+/* End content (button and links) */
+.end-section {
+    min-height: 50vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 10;
+    padding-bottom: 80px;
 }

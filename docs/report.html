@@ -562,7 +562,7 @@
             <p>
                 Despite these advances, a persistent limitation of MI-BCIs is the substantial inter-subject variability
                 in performance. A significant fraction of users, estimated to be around 20%, fail to achieve reliable
-                control even after training, a phenomenon commonly referred to as <em>BCI illiteracy</em>. As a result,
+                control even after training, a phenomenon commonly referred to as <em>BCI illiteracy</em> [6]. As a result,
                 current BCI deployment typically requires lengthy and resource-intensive EEG recording sessions,
                 calibration procedures, and user training phases before determining whether a given individual is
                 compatible with a specific BCI paradigm. This trial-and-error process is costly for researchers and
@@ -614,16 +614,16 @@
 
             <h3 class="subsection-title" id="data-acquisition">2.1 Data Acquisition and Preprocessing</h3>
             <p>
-                EEG data were obtained from the PhysioNet EEG Motor Movement/Imagery Dataset, comprising recordings from
+                EEG data were obtained from the PhysioNet EEG Motor Movement/Imagery Dataset [1], comprising recordings from
                 109 healthy subjects performing motor execution and motor imagery tasks. Each subject completed multiple
                 runs of four experimental paradigms: (1) opening and closing left or right fist, (2) imagining opening
                 and closing left or right fist, (3) opening and closing both fists or both feet, and (4) imagining
-                opening and closing both fists or both feet. EEG signals were recorded using the BCI2000 system at 160
+                opening and closing both fists or both feet. EEG signals were recorded using the BCI2000 system [2] at 160
                 Hz sampling rate from 64 electrodes positioned according to the international 10–10 system, with
                 particular focus on motor cortex channels and their surroundings (C3, C4, Cz, FC1, FC2, CP1, CP2).
             </p>
             <p>
-                Raw EEG data underwent standard preprocessing using the MNE-Python library. The raw data was mapped to a
+                Raw EEG data underwent standard preprocessing using the MNE-Python library [4]. The raw data was mapped to a
                 3D coordinate system via a 10-05 standard montage in anticipation of ICA. Additionally, common average
                 re-referencing was utilized to give voltage readings from EEG channels a more standard reference and
                 minimize noise interference, which is particularly impactful in power calculations. Signals were
@@ -742,7 +742,7 @@
             <p>
                 Lempel-Ziv complexity (LZC) measures temporal pattern diversity by counting distinct subsequences as a
                 signal unfolds. Raw EEG signals were bandpass filtered to alpha or beta bands, then binarized using
-                median thresholding (above median = 1, below = 0). The LZ76 algorithm was applied, normalizing by
+                median thresholding (above median = 1, below = 0). The LZ76 algorithm was applied [9], normalizing by
                 sequence length:
             </p>
             <div class="eq-block">
@@ -763,7 +763,7 @@
                 performance. Theta (4–8 Hz) activity is associated with cognitive load, drowsiness, and mind-wandering,
                 while alpha (8–13 Hz) power indexes cortical idling and inhibition. TAR was computed as the ratio of
                 mean theta band power to mean alpha band power. Higher TAR values suggest elevated cognitive load or
-                reduced cortical readiness, potentially hindering motor imagery performance. We computed
+                reduced cortical readiness, potentially hindering motor imagery performance [10]. We computed
                 \(\Delta\text{TAR} = \text{TAR}_{\text{task}} - \text{TAR}_{\text{baseline}}\) to capture task-related
                 modulation.
             </p>
@@ -784,7 +784,7 @@
             <h3 class="subsection-title" id="classifier">2.4 Classifier</h3>
             <p>
                 To establish ground truth BCI performance metrics, we implemented a Common Spatial Patterns (CSP)
-                decoder with Linear Discriminant Analysis (LDA) classification following the MetaBCI framework. The CSP
+                decoder with Linear Discriminant Analysis (LDA) classification following the MetaBCI framework [12]. The CSP
                 algorithm serves as a spatial filtering technique that maximizes class separability by extracting
                 features that emphasize variance differences between motor imagery conditions while suppressing common
                 noise. For each subject, we selected the top \(k=4\) and bottom \(k=4\) spatial filters ranked by
@@ -918,7 +918,28 @@
         <!-- ══════════════════════════════════════ -->
         <section class="report-section" id="results">
             <h2 class="section-title"><span class="section-num">04</span> Results</h2>
-            <div class="stub-placeholder">Results section — in progress</div>
+            <p>
+                We defined “literacy” using a subject-specific CSP-LDA decoder and then asked whether compact EEG
+                summaries could predict that decoder-derived score. The full merged dataset contained 38 subject-level
+                features, which we reduced to 12 selected predictors for the final regression model. Among the models we
+                tested, Random Forest performed best, achieving a Pearson correlation of 0.580 and an R² of 0.302 on the
+                99 subjects with complete labels - evidence that even early, lightweight EEG features contain meaningful
+                signal about later MI-BCI performance.
+            </p>
+            <div class="figure-card" style="margin-top: 30px;">
+                <div class="figure-card-header">
+                    <span class="figure-num">FIG 05</span>
+                    <span class="figure-caption-title">Regression Model Performance</span>
+                </div>
+                <div class="figure-img-wrap">
+                    <img src="images/Pre-Screening_Motor_Imagery_BCI_Literacy_Using_Low-Sample_EEG-Derived_Features_3.webp"
+                        alt="Results graph showing regression performance on EEG features">
+                </div>
+                <div class="figure-caption">
+                    Performance of the Random Forest regression model on the 99 subjects, demonstrating meaningful
+                    correlation between early EEG features and BCI literacy scores.
+                </div>
+            </div>
         </section>
 
         <!-- ══════════════════════════════════════ -->
@@ -926,7 +947,28 @@
         <!-- ══════════════════════════════════════ -->
         <section class="report-section" id="discussion">
             <h2 class="section-title"><span class="section-num">05</span> Discussion</h2>
-            <div class="stub-placeholder">Discussion section — in progress</div>
+            <p>
+                We also framed the task as a practical screening decision: who is likely to be a low performer, and who
+                may be worth further calibration? Using a decoder-accuracy threshold of 0.65, our Random Forest
+                classifier reached 78.8% leave-one-out accuracy, with especially strong performance in identifying
+                likely low performers. In real terms, that means this system shows promise as a fast, data-efficient
+                first-pass filter - one that could reduce wasted calibration time, guide users toward better BCI
+                pathways earlier, and make MI-BCI systems more practical to deploy.
+            </p>
+            <div class="figure-card" style="margin-top: 30px;">
+                <div class="figure-card-header">
+                    <span class="figure-num">FIG 06</span>
+                    <span class="figure-caption-title">Practical Screening Decision</span>
+                </div>
+                <div class="figure-img-wrap">
+                    <img src="images/Pre-Screening_Motor_Imagery_BCI_Literacy_Using_Low-Sample_EEG-Derived_Features_4.webp"
+                        alt="Classification results for screening decision">
+                </div>
+                <div class="figure-caption">
+                    Classifier performance identifying low and high BCI performers based on a threshold accuracy of
+                    0.65, acting as a data-efficient first-pass filter.
+                </div>
+            </div>
         </section>
 
         <!-- ══════════════════════════════════════ -->
@@ -934,7 +976,13 @@
         <!-- ══════════════════════════════════════ -->
         <section class="report-section" id="conclusion">
             <h2 class="section-title"><span class="section-num">06</span> Conclusion</h2>
-            <div class="stub-placeholder">Conclusion section — in progress</div>
+            <p>
+                In conclusion, our approach demonstrates that comprehensive resting-state and minimal-trial EEG features
+                can reliably estimate a subject’s compatibility with motor imagery BCIs. By deploying a Random Forest
+                classifier as an initial screening step, researchers and clinicians can significantly reduce the costs
+                and frustration associated with BCI calibration. Future work will explore larger datasets and
+                cross-session validation to further solidify the predictive power of these lightweight features.
+            </p>
         </section>
 
         <!-- ══════════════════════════════════════ -->
@@ -973,9 +1021,11 @@
                 <li>Klimesch, W. (1999). EEG alpha and theta oscillations reflect cognitive and memory performance: A
                     review and analysis. <em>Brain Research Reviews</em>, 29(2–3), 169–195.</li>
                 <li>Mei, J., et al. (2024). MetaBCI: A new open-source Python package for brain-computer interfaces.
-                    <em>arXiv preprint</em>.</li>
+                    <em>arXiv preprint</em>.
+                </li>
                 <li>Borgheai, S. B., et al. (2024). Predicting BCI performance from resting-state EEG features.
-                    <em>Neurocomputing</em>, 107658.</li>
+                    <em>Neurocomputing</em>, 107658.
+                </li>
                 <li>Pfurtscheller, G., &amp; Lopes da Silva, F. H. (1999). Event-related EEG/MEG synchronization and
                     desynchronization: Basic principles. <em>Clinical Neurophysiology</em>, 110(11), 1842–1857.</li>
                 <li>Neuper, C., Wörtz, M., &amp; Pfurtscheller, G. (2006). ERD/ERS patterns reflecting sensorimotor

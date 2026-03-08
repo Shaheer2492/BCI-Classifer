@@ -10,102 +10,53 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Roboto+Mono:wght@300;400;500&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="css/neuralink.css">
     <style>
-        .hero-container {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            position: relative;
-            z-index: 10;
+        :root {
+            --bg-color: #050505;
+            --panel-bg: #0f0f0f;
+            --text-primary: #ffffff;
+            --text-secondary: #666666;
+            --accent-cyan: #00ffcc;
+            --grid-line: #1a1a1a;
+            --font-ui: 'Inter', sans-serif;
+            --font-mono: 'Roboto Mono', monospace;
         }
 
-        .hero-title {
-            font-size: 4rem;
-            letter-spacing: 5px;
-            font-weight: 300;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.1);
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        .hero-subtitle {
-            font-size: 1.2rem;
-            color: var(--text-secondary);
-            max-width: 600px;
-            margin-bottom: 50px;
-            line-height: 1.6;
+        html {
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-cyan) var(--bg-color);
         }
 
-        .enter-btn {
-            padding: 15px 40px;
-            background: transparent;
-            border: 1px solid var(--accent-cyan);
-            color: var(--accent-cyan);
-            font-family: var(--font-mono);
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            letter-spacing: 2px;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .enter-btn:hover {
-            background: var(--accent-cyan);
-            color: #000;
-            box-shadow: 0 0 20px rgba(0, 255, 204, 0.4);
-        }
-
-        .links-row {
-            display: flex;
-            gap: 30px;
-            margin-top: 80px;
-        }
-
-        .sub-link {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: color 0.3s;
-        }
-
-        .sub-link:hover {
+        body {
+            background-color: var(--bg-color);
             color: var(--text-primary);
+            font-family: var(--font-ui);
+            overflow-y: auto;
+            height: auto;
         }
 
-        .github-footer {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            color: #333;
-            font-family: var(--font-mono);
-            font-size: 0.65rem;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            transition: color 0.3s;
+        /* ── SCANLINE OVERLAY ── */
+        .overlay-scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+            z-index: 1000;
         }
 
-        .github-footer:hover {
-            color: var(--accent-cyan);
-        }
-
-        .github-footer svg {
-            transition: stroke 0.3s;
-        }
-
-        /* Background Animation */
+        /* ── BACKGROUND GRID ── */
         .bg-grid {
             position: fixed;
             top: 0;
@@ -116,20 +67,341 @@
                 linear-gradient(var(--grid-line) 1px, transparent 1px),
                 linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
             background-size: 50px 50px;
-            opacity: 0.1;
-            transform: perspective(500px) rotateX(60deg) translateY(-100px) translateZ(-200px);
-            animation: grid-move 20s linear infinite;
-            z-index: 1;
+            opacity: 0.08;
+            z-index: 0;
             pointer-events: none;
         }
 
-        @keyframes grid-move {
-            0% {
-                transform: perspective(500px) rotateX(60deg) translateY(0) translateZ(-200px);
+        /* ── HERO SECTION ── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            padding: 60px 20px;
+        }
+
+        .hero-title {
+            font-size: 4.5rem;
+            letter-spacing: 8px;
+            font-weight: 300;
+            text-transform: uppercase;
+            text-shadow: 0 0 30px rgba(0, 255, 204, 0.15);
+            margin-bottom: 16px;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 500px;
+            line-height: 1.7;
+            margin-bottom: 0;
+        }
+
+        .scroll-cue {
+            position: absolute;
+            bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            animation: float 2.5s ease-in-out infinite;
+        }
+
+        .scroll-cue span {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            color: var(--accent-cyan);
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        .scroll-cue .arrow {
+            width: 20px;
+            height: 20px;
+            border-right: 1.5px solid var(--accent-cyan);
+            border-bottom: 1.5px solid var(--accent-cyan);
+            transform: rotate(45deg);
+            opacity: 0.6;
+        }
+
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0);
             }
 
-            100% {
-                transform: perspective(500px) rotateX(60deg) translateY(50px) translateZ(-200px);
+            50% {
+                transform: translateY(8px);
+            }
+        }
+
+        /* ── SCROLLYTELLING CORE LAYOUT ── */
+        .scrolly {
+            position: relative;
+            z-index: 10;
+        }
+
+        .scrolly__graphic {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+        }
+
+        .visual-stage {
+            width: 400px;
+            height: 400px;
+            position: relative;
+        }
+
+        .visual-stage canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .scrolly__steps {
+            position: relative;
+            z-index: 2;
+            /* Offset the steps so they overlap the sticky graphic */
+            margin-top: -100vh;
+            padding-bottom: 40vh;
+        }
+
+        .step {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            padding: 0 10%;
+        }
+
+        /* Alternate text left/right */
+        .step:nth-child(odd) {
+            justify-content: flex-start;
+        }
+
+        .step:nth-child(even) {
+            justify-content: flex-end;
+        }
+
+        .step__content {
+            max-width: 420px;
+            background: rgba(5, 5, 5, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--grid-line);
+            border-radius: 6px;
+            padding: 36px 32px;
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .step.active .step__content {
+            opacity: 1;
+            transform: translateY(0);
+            border-color: rgba(0, 255, 204, 0.25);
+            box-shadow:
+                0 0 40px rgba(0, 255, 204, 0.06),
+                inset 0 1px 0 rgba(0, 255, 204, 0.1);
+        }
+
+        .step__number {
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            color: var(--accent-cyan);
+            letter-spacing: 4px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .step__heading {
+            font-size: 1.6rem;
+            font-weight: 300;
+            letter-spacing: 1.5px;
+            margin-bottom: 16px;
+            line-height: 1.3;
+        }
+
+        .step__body {
+            font-size: 0.92rem;
+            line-height: 1.8;
+            color: #aaa;
+        }
+
+        .step__body .highlight {
+            color: var(--accent-cyan);
+            font-weight: 400;
+        }
+
+        .step__body .stat {
+            font-family: var(--font-mono);
+            font-size: 2.2rem;
+            font-weight: 300;
+            color: var(--text-primary);
+            display: block;
+            margin: 16px 0 8px;
+            text-shadow: 0 0 20px rgba(0, 255, 204, 0.2);
+        }
+
+        .step__note {
+            font-size: 0.72rem;
+            color: #555;
+            font-family: var(--font-mono);
+            margin-top: 14px;
+            line-height: 1.5;
+        }
+
+        /* ── END / CTA SECTION ── */
+        .end-section {
+            min-height: 60vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+            padding: 80px 20px;
+            gap: 40px;
+        }
+
+        .enter-btn {
+            padding: 18px 50px;
+            background: transparent;
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            letter-spacing: 3px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .enter-btn:hover {
+            background: var(--accent-cyan);
+            color: #000;
+            box-shadow: 0 0 30px rgba(0, 255, 204, 0.4);
+        }
+
+        .links-row {
+            display: flex;
+            gap: 30px;
+        }
+
+        .sub-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            transition: color 0.3s;
+        }
+
+        .sub-link:hover {
+            color: var(--text-primary);
+        }
+
+        .github-footer {
+            position: fixed;
+            bottom: 16px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            color: #333;
+            font-family: var(--font-mono);
+            font-size: 0.6rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: color 0.3s;
+            z-index: 100;
+        }
+
+        .github-footer:hover {
+            color: var(--accent-cyan);
+        }
+
+        /* ── PROGRESS BAR ── */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 2px;
+            background: var(--accent-cyan);
+            z-index: 999;
+            width: 0%;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 8px rgba(0, 255, 204, 0.5);
+        }
+
+        /* ── STEP INDICATOR DOTS ── */
+        .step-dots {
+            position: fixed;
+            right: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            z-index: 100;
+        }
+
+        .step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #222;
+            border: 1px solid #333;
+            transition: all 0.4s;
+            cursor: pointer;
+        }
+
+        .step-dot.active {
+            background: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(0, 255, 204, 0.5);
+            transform: scale(1.3);
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 2.5rem;
+                letter-spacing: 4px;
+            }
+
+            .step {
+                padding: 0 5%;
+            }
+
+            .step:nth-child(even) {
+                justify-content: flex-start;
+            }
+
+            .step__content {
+                max-width: 100%;
+            }
+
+            .visual-stage {
+                width: 300px;
+                height: 300px;
+            }
+
+            .step-dots {
+                display: none;
             }
         }
     </style>
@@ -138,33 +410,618 @@
 <body>
     <div class="overlay-scanlines"></div>
     <div class="bg-grid"></div>
+    <div class="progress-bar" id="progressBar"></div>
 
-    <main class="hero-container">
+    <!-- Step indicator dots -->
+    <nav class="step-dots" id="stepDots">
+        <div class="step-dot" data-step="0"></div>
+        <div class="step-dot" data-step="1"></div>
+        <div class="step-dot" data-step="2"></div>
+        <div class="step-dot" data-step="3"></div>
+        <div class="step-dot" data-step="4"></div>
+        <div class="step-dot" data-step="5"></div>
+    </nav>
+
+    <!-- ── HERO ── -->
+    <section class="hero">
         <h1 class="hero-title">BCI Classifier</h1>
         <p class="hero-subtitle">
-            Advanced Motor Imagery Decoding
-            <br>
-            Predicting Brain-Computer Interface performance from early trials.
+            Pre-screening motor imagery BCI literacy<br>
+            using low-sample EEG-derived features.
         </p>
+        <div class="scroll-cue">
+            <span>Scroll</span>
+            <div class="arrow"></div>
+        </div>
+    </section>
 
-        <a href="ml-demo.html" class="enter-btn">ENTER INTERFACE</a>
+    <!-- ── SCROLLYTELLING ── -->
+    <div class="scrolly">
 
+        <!-- Sticky visual background -->
+        <div class="scrolly__graphic">
+            <div class="visual-stage">
+                <canvas id="vizCanvas" width="800" height="800"></canvas>
+            </div>
+        </div>
+
+        <!-- Text steps that scroll over the sticky graphic -->
+        <div class="scrolly__steps">
+
+            <!-- STEP 1: The Hook -->
+            <div class="step" data-step="0">
+                <div class="step__content">
+                    <span class="step__number">01 — THE PROBLEM</span>
+                    <h2 class="step__heading">Control through Thought.</h2>
+                    <p class="step__body">
+                        Motor imagery BCIs let users control systems just by <span class="highlight">imagining
+                            movement</span>.
+                        But there's a catch: some users never achieve reliable control, even after substantial training.
+                    </p>
+                </div>
+            </div>
+
+            <!-- STEP 2: The Bottleneck -->
+            <div class="step" data-step="1">
+                <div class="step__content">
+                    <span class="step__number">02 — THE BOTTLENECK</span>
+                    <h2 class="step__heading">The Calibration Trap.</h2>
+                    <p class="step__body">
+                        Today's calibration process takes <span class="highlight">hours</span>.
+                        It's costly in time, effort, and frustration.
+                        We asked: <em>Can we tell early on who is actually likely to succeed?</em>
+                    </p>
+                </div>
+            </div>
+
+            <!-- STEP 3: The Solution -->
+            <div class="step" data-step="2">
+                <div class="step__content">
+                    <span class="step__number">03 — THE SOLUTION</span>
+                    <h2 class="step__heading">A Fast, Low-Sample Filter.</h2>
+                    <p class="step__body">
+                        Instead of long sessions, we designed an EEG screening tool using just
+                        a <span class="highlight">brief resting baseline</span> and the
+                        <span class="highlight">first 15 attempts</span>. We focused only on a compact
+                        sensorimotor region to keep things fast.
+                    </p>
+                </div>
+            </div>
+
+            <!-- STEP 4: The Data & Model -->
+            <div class="step" data-step="3">
+                <div class="step__content">
+                    <span class="step__number">04 — THE MODEL</span>
+                    <h2 class="step__heading">Distilling the Signal.</h2>
+                    <p class="step__body">
+                        Using the PhysioNet dataset (<span class="highlight">109 subjects</span>),
+                        we took 38 complex brain features and distilled them down to the
+                        <span class="highlight">12 most important</span> predictors.
+                        We fed these into a Random Forest machine learning model.
+                    </p>
+                </div>
+            </div>
+
+            <!-- STEP 5: The Results -->
+            <div class="step" data-step="4">
+                <div class="step__content">
+                    <span class="step__number">05 — THE RESULTS</span>
+                    <h2 class="step__heading">It Worked.</h2>
+                    <p class="step__body">
+                        <span class="stat">78.8%</span>
+                        Accuracy at identifying who will struggle — <em>before</em> they waste hours calibrating.
+                        A fast, data-efficient first-pass filter.
+                    </p>
+                    <p class="step__note">
+                        Pearson r = 0.580 · R² = 0.302 · threshold = 0.65
+                    </p>
+                </div>
+            </div>
+
+            <!-- STEP 6: The CTA -->
+            <div class="step" data-step="5">
+                <div class="step__content">
+                    <span class="step__number">06 — TRY IT</span>
+                    <h2 class="step__heading">See It in Action.</h2>
+                    <p class="step__body">
+                        Explore the live interactive simulation — watch our model classify
+                        real PhysioNet subjects in real-time.
+                    </p>
+                    <div style="margin-top: 24px;">
+                        <a href="ml-demo.html" class="enter-btn">ENTER INTERFACE</a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ── BOTTOM LINKS ── -->
+    <div class="end-section">
         <div class="links-row">
             <a href="methodology.html" class="sub-link">Methodology</a>
             <a href="results.html" class="sub-link">Results</a>
             <a href="report.html" class="sub-link">Report</a>
             <a href="documentation.html" class="sub-link">Documentation</a>
         </div>
+    </div>
 
-        <a href="https://github.com/Shaheer2492/BCI-Classifer" class="github-footer" target="_blank" rel="noopener">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path
-                    d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
-            </svg>
-            GitHub Repository
-        </a>
-    </main>
+    <a href="https://github.com/Shaheer2492/BCI-Classifer" class="github-footer" target="_blank" rel="noopener">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <path
+                d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+        </svg>
+        GitHub
+    </a>
+
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <!-- VISUALIZATION + SCROLL LOGIC                                  -->
+    <!-- ══════════════════════════════════════════════════════════════ -->
+    <script>
+        (() => {
+            const canvas = document.getElementById('vizCanvas');
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+            const CX = W / 2;
+            const CY = H / 2;
+
+            let currentStep = -1;
+            let targetStep = 0;
+            let animFrame = 0;
+
+            // ── PARTICLE SYSTEMS ──
+            // Nodes for brain network
+            const nodes = [];
+            const edges = [];
+            const NUM_NODES = 40;
+
+            for (let i = 0; i < NUM_NODES; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const radius = 80 + Math.random() * 200;
+                nodes.push({
+                    x: CX + Math.cos(angle) * radius,
+                    y: CY + Math.sin(angle) * radius,
+                    baseX: CX + Math.cos(angle) * radius,
+                    baseY: CY + Math.sin(angle) * radius,
+                    r: 2 + Math.random() * 3,
+                    phase: Math.random() * Math.PI * 2,
+                    speed: 0.005 + Math.random() * 0.015,
+                    drift: 5 + Math.random() * 15,
+                    glow: 0,
+                    active: false
+                });
+            }
+
+            // Edges between nearby nodes
+            for (let i = 0; i < NUM_NODES; i++) {
+                for (let j = i + 1; j < NUM_NODES; j++) {
+                    const dx = nodes[i].baseX - nodes[j].baseX;
+                    const dy = nodes[i].baseY - nodes[j].baseY;
+                    if (Math.sqrt(dx * dx + dy * dy) < 140) {
+                        edges.push({ a: i, b: j, glow: 0 });
+                    }
+                }
+            }
+
+            // Data funnel particles for step 4
+            const funnelParticles = [];
+            for (let i = 0; i < 38; i++) {
+                funnelParticles.push({
+                    x: 100 + Math.random() * (W - 200),
+                    y: 80 + Math.random() * 200,
+                    targetX: CX + (Math.random() - 0.5) * 60,
+                    targetY: CY + 80 + Math.random() * 40,
+                    eliminated: i >= 12,
+                    alpha: 1,
+                    size: 3 + Math.random() * 3
+                });
+            }
+
+            // ── DRAWING FUNCTIONS ──
+
+            function clear() {
+                ctx.clearRect(0, 0, W, H);
+            }
+
+            // Step 0: Brain network — nodes glow and connect
+            function drawBrainNetwork(t) {
+                // Activate nodes in sequence
+                const activateCount = Math.min(NUM_NODES, Math.floor(t * 0.8));
+                for (let i = 0; i < NUM_NODES; i++) {
+                    const n = nodes[i];
+                    n.active = i < activateCount;
+                    n.x = n.baseX + Math.sin(animFrame * n.speed + n.phase) * n.drift;
+                    n.y = n.baseY + Math.cos(animFrame * n.speed * 0.7 + n.phase) * n.drift * 0.6;
+                    n.glow += ((n.active ? 1 : 0.15) - n.glow) * 0.05;
+                }
+
+                // Edges
+                for (const e of edges) {
+                    const a = nodes[e.a];
+                    const b = nodes[e.b];
+                    const alpha = Math.min(a.glow, b.glow) * 0.4;
+                    if (alpha < 0.02) continue;
+                    ctx.beginPath();
+                    ctx.moveTo(a.x, a.y);
+                    ctx.lineTo(b.x, b.y);
+                    ctx.strokeStyle = `rgba(0, 255, 204, ${alpha})`;
+                    ctx.lineWidth = 0.8;
+                    ctx.stroke();
+                }
+
+                // Nodes
+                for (const n of nodes) {
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(0, 255, 204, ${n.glow * 0.9})`;
+                    ctx.fill();
+                    if (n.glow > 0.5) {
+                        ctx.beginPath();
+                        ctx.arc(n.x, n.y, n.r + 6, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(0, 255, 204, ${n.glow * 0.15})`;
+                        ctx.fill();
+                    }
+                }
+            }
+
+            // Step 1: Clock / time pressure
+            function drawClock(t) {
+                const progress = Math.min(1, t / 60);
+                // Outer ring
+                ctx.beginPath();
+                ctx.arc(CX, CY, 150, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(0, 255, 204, 0.15)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Tick marks
+                for (let i = 0; i < 60; i++) {
+                    const angle = (i / 60) * Math.PI * 2 - Math.PI / 2;
+                    const inner = i % 5 === 0 ? 130 : 140;
+                    ctx.beginPath();
+                    ctx.moveTo(CX + Math.cos(angle) * inner, CY + Math.sin(angle) * inner);
+                    ctx.lineTo(CX + Math.cos(angle) * 148, CY + Math.sin(angle) * 148);
+                    ctx.strokeStyle = i % 5 === 0 ? 'rgba(0, 255, 204, 0.5)' : 'rgba(255, 255, 255, 0.12)';
+                    ctx.lineWidth = i % 5 === 0 ? 2 : 1;
+                    ctx.stroke();
+                }
+
+                // Spinning hand (fast)
+                const handAngle = (animFrame * 0.08) - Math.PI / 2;
+                ctx.beginPath();
+                ctx.moveTo(CX, CY);
+                ctx.lineTo(CX + Math.cos(handAngle) * 120, CY + Math.sin(handAngle) * 120);
+                ctx.strokeStyle = 'rgba(255, 80, 80, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Center dot
+                ctx.beginPath();
+                ctx.arc(CX, CY, 5, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(0, 255, 204, 0.8)';
+                ctx.fill();
+
+                // "HOURS" text
+                ctx.font = '600 11px "Roboto Mono"';
+                ctx.fillStyle = 'rgba(255, 80, 80, 0.6)';
+                ctx.textAlign = 'center';
+                ctx.fillText('HOURS OF CALIBRATION', CX, CY + 185);
+            }
+
+            // Step 2: Brain scan with C3, Cz, C4
+            function drawBrainScan(t) {
+                // Brain outline (ellipse)
+                ctx.beginPath();
+                ctx.ellipse(CX, CY, 140, 170, 0, 0, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Scan line sweep
+                const scanY = CY - 170 + ((animFrame * 2) % 340);
+                ctx.beginPath();
+                ctx.moveTo(CX - 160, scanY);
+                ctx.lineTo(CX + 160, scanY);
+                ctx.strokeStyle = 'rgba(0, 255, 204, 0.2)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                // Glow at scan line
+                const grad = ctx.createLinearGradient(CX - 160, scanY - 10, CX + 160, scanY + 10);
+                grad.addColorStop(0, 'rgba(0, 255, 204, 0)');
+                grad.addColorStop(0.5, 'rgba(0, 255, 204, 0.08)');
+                grad.addColorStop(1, 'rgba(0, 255, 204, 0)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(CX - 160, scanY - 8, 320, 16);
+
+                // Electrode positions - C3, Cz, C4
+                const electrodes = [
+                    { label: 'C3', x: CX - 80, y: CY },
+                    { label: 'Cz', x: CX, y: CY },
+                    { label: 'C4', x: CX + 80, y: CY }
+                ];
+
+                for (const e of electrodes) {
+                    const pulse = Math.sin(animFrame * 0.06) * 0.3 + 0.7;
+                    // Glow ring
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, 22, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(0, 255, 204, ${0.08 * pulse})`;
+                    ctx.fill();
+                    // Node
+                    ctx.beginPath();
+                    ctx.arc(e.x, e.y, 8, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(0, 255, 204, ${0.7 * pulse})`;
+                    ctx.fill();
+                    // Label
+                    ctx.font = '500 12px "Roboto Mono"';
+                    ctx.fillStyle = `rgba(0, 255, 204, ${0.8 * pulse})`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(e.label, e.x, e.y - 30);
+                }
+
+                // Connect them
+                ctx.beginPath();
+                ctx.moveTo(electrodes[0].x, electrodes[0].y);
+                ctx.lineTo(electrodes[1].x, electrodes[1].y);
+                ctx.lineTo(electrodes[2].x, electrodes[2].y);
+                ctx.strokeStyle = 'rgba(0, 255, 204, 0.2)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 4]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.font = '400 10px "Roboto Mono"';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+                ctx.textAlign = 'center';
+                ctx.fillText('SENSORIMOTOR CORTEX', CX, CY + 60);
+            }
+
+            // Step 3: Data funnel 38 → 12
+            function drawFunnel(t) {
+                const progress = Math.min(1, t / 90);
+
+                // Funnel shape
+                ctx.beginPath();
+                ctx.moveTo(CX - 200, CY - 140);
+                ctx.lineTo(CX - 40, CY + 60);
+                ctx.lineTo(CX - 40, CY + 140);
+                ctx.lineTo(CX + 40, CY + 140);
+                ctx.lineTo(CX + 40, CY + 60);
+                ctx.lineTo(CX + 200, CY - 140);
+                ctx.closePath();
+                ctx.strokeStyle = 'rgba(0, 255, 204, 0.15)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                // Particles
+                for (let i = 0; i < funnelParticles.length; i++) {
+                    const p = funnelParticles[i];
+                    const t2 = Math.min(1, progress * 2);
+
+                    if (p.eliminated && progress > 0.4) {
+                        // Fade out eliminated particles
+                        p.alpha = Math.max(0, p.alpha - 0.02);
+                    }
+
+                    const cx = p.x + (p.targetX - p.x) * t2;
+                    const cy = p.y + (p.targetY - p.y) * t2;
+
+                    if (p.alpha < 0.01) continue;
+
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = p.eliminated
+                        ? `rgba(255, 80, 80, ${p.alpha * 0.5})`
+                        : `rgba(0, 255, 204, ${p.alpha * 0.8})`;
+                    ctx.fill();
+                }
+
+                // Labels
+                ctx.font = '600 14px "Roboto Mono"';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillText('38 FEATURES', CX, CY - 160);
+
+                if (progress > 0.5) {
+                    ctx.fillStyle = 'rgba(0, 255, 204, 0.7)';
+                    ctx.fillText('12 PREDICTORS', CX, CY + 175);
+                }
+
+                // Arrow into "Random Forest"
+                if (progress > 0.7) {
+                    ctx.font = '500 11px "Roboto Mono"';
+                    ctx.fillStyle = 'rgba(0, 255, 204, 0.45)';
+                    ctx.fillText('↓ RANDOM FOREST', CX, CY + 200);
+                }
+            }
+
+            // Step 4: Results gauge
+            function drawGauge(t) {
+                const progress = Math.min(1, t / 60);
+                const targetAngle = 0.788 * Math.PI; // 78.8%
+                const currentAngle = targetAngle * progress;
+
+                // Background arc
+                ctx.beginPath();
+                ctx.arc(CX, CY + 20, 150, Math.PI, Math.PI * 2);
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+                ctx.lineWidth = 12;
+                ctx.stroke();
+
+                // Filled arc
+                ctx.beginPath();
+                ctx.arc(CX, CY + 20, 150, Math.PI, Math.PI + currentAngle);
+                ctx.strokeStyle = 'rgba(0, 255, 204, 0.7)';
+                ctx.lineWidth = 12;
+                ctx.lineCap = 'round';
+                ctx.stroke();
+                ctx.lineCap = 'butt';
+
+                // Percentage text
+                const pct = (progress * 78.8).toFixed(1);
+                ctx.font = '300 56px "Inter"';
+                ctx.fillStyle = var_text_primary(progress);
+                ctx.textAlign = 'center';
+                ctx.fillText(`${pct}%`, CX, CY + 10);
+
+                ctx.font = '400 12px "Roboto Mono"';
+                ctx.fillStyle = 'rgba(0, 255, 204, 0.6)';
+                ctx.fillText('LEAVE-ONE-OUT ACCURACY', CX, CY + 45);
+
+                // Threshold line
+                const threshAngle = Math.PI + 0.65 * Math.PI;
+                const tx = CX + Math.cos(threshAngle) * 165;
+                const ty = (CY + 20) + Math.sin(threshAngle) * 165;
+                ctx.beginPath();
+                ctx.arc(tx, ty, 3, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 200, 0, 0.6)';
+                ctx.fill();
+                ctx.font = '400 9px "Roboto Mono"';
+                ctx.fillStyle = 'rgba(255, 200, 0, 0.5)';
+                ctx.fillText('0.65 THRESHOLD', tx, ty - 12);
+            }
+
+            function var_text_primary(alpha) {
+                return `rgba(255,255,255,${Math.min(1, alpha + 0.3)})`;
+            }
+
+            // Step 5: Pulsing "enter" prompt
+            function drawInterface(t) {
+                const pulse = Math.sin(animFrame * 0.04) * 0.2 + 0.8;
+
+                // Central rings
+                for (let i = 0; i < 3; i++) {
+                    const r = 60 + i * 50;
+                    ctx.beginPath();
+                    ctx.arc(CX, CY, r, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(0, 255, 204, ${0.05 + pulse * 0.05})`;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+
+                // Center icon
+                ctx.beginPath();
+                ctx.arc(CX, CY, 30, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(0, 255, 204, ${0.1 * pulse})`;
+                ctx.fill();
+                ctx.strokeStyle = `rgba(0, 255, 204, ${0.5 * pulse})`;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Triangle play icon
+                ctx.beginPath();
+                ctx.moveTo(CX - 8, CY - 12);
+                ctx.lineTo(CX - 8, CY + 12);
+                ctx.lineTo(CX + 14, CY);
+                ctx.closePath();
+                ctx.fillStyle = `rgba(0, 255, 204, ${0.6 * pulse})`;
+                ctx.fill();
+
+                ctx.font = '400 11px "Roboto Mono"';
+                ctx.fillStyle = `rgba(0, 255, 204, ${0.5 * pulse})`;
+                ctx.textAlign = 'center';
+                ctx.fillText('SIMULATION READY', CX, CY + 60);
+            }
+
+            // ── MAIN DRAW LOOP ──
+            const drawFunctions = [
+                drawBrainNetwork,
+                drawClock,
+                drawBrainScan,
+                drawFunnel,
+                drawGauge,
+                drawInterface
+            ];
+
+            let stepTimers = [0, 0, 0, 0, 0, 0];
+
+            function draw() {
+                animFrame++;
+                clear();
+
+                // Increment timer for active step
+                if (currentStep >= 0 && currentStep < stepTimers.length) {
+                    stepTimers[currentStep]++;
+                }
+
+                // Draw current step's visual
+                if (currentStep >= 0 && currentStep < drawFunctions.length) {
+                    drawFunctions[currentStep](stepTimers[currentStep]);
+                }
+
+                requestAnimationFrame(draw);
+            }
+
+            // ── INTERSECTION OBSERVER ──
+            const steps = document.querySelectorAll('.step');
+            const dots = document.querySelectorAll('.step-dot');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        const stepIdx = parseInt(entry.target.dataset.step);
+                        if (stepIdx !== currentStep) {
+                            currentStep = stepIdx;
+                            // Reset timer for freshness on re-entry
+                            stepTimers[stepIdx] = 0;
+                        }
+                        // Update dots
+                        dots.forEach((d, i) => {
+                            d.classList.toggle('active', i === stepIdx);
+                        });
+                    } else {
+                        entry.target.classList.remove('active');
+                    }
+                });
+            }, {
+                root: null,
+                rootMargin: '-30% 0px -30% 0px',
+                threshold: 0.1
+            });
+
+            steps.forEach(s => observer.observe(s));
+
+            // ── PROGRESS BAR ──
+            const progressBar = document.getElementById('progressBar');
+            window.addEventListener('scroll', () => {
+                const scrollTop = window.scrollY;
+                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const scrollPct = (scrollTop / docHeight) * 100;
+                progressBar.style.width = scrollPct + '%';
+            });
+
+            // ── DOT CLICK NAVIGATION ──
+            dots.forEach(dot => {
+                dot.addEventListener('click', () => {
+                    const idx = parseInt(dot.dataset.step);
+                    steps[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                });
+            });
+
+            // ── RESET FUNNEL PARTICLES on step re-entry ──
+            function resetFunnelParticles() {
+                for (let i = 0; i < funnelParticles.length; i++) {
+                    funnelParticles[i].alpha = 1;
+                    funnelParticles[i].x = 100 + Math.random() * (W - 200);
+                    funnelParticles[i].y = 80 + Math.random() * 200;
+                }
+            }
+
+            // Watch for step 3 specifically to reset funnel
+            const funnelObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) resetFunnelParticles();
+                });
+            }, { threshold: 0.1 });
+            if (steps[3]) funnelObserver.observe(steps[3]);
+
+            // ── GO ──
+            draw();
+        })();
+    </script>
 </body>
 
 </html>
