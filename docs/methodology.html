@@ -27,94 +27,213 @@
 
         <main class="content-container">
             <h1>Methodology</h1>
-            <p>Our four-phase approach to predicting BCI performance from early trial data.</p>
+            <p>A low-sample pre-screening pipeline for MI-BCI literacy combining brief resting-state baselines with
+                only the first <em>n</em>=15 motor imagery trials.</p>
 
-            <h2>Phase 1: Ground Truth Label Generation</h2>
-            <p>We establish baseline performance metrics for each subject using standard MetaBCI decoders. This involves
-                processing the PhysionetMI dataset (109 subjects) to generate valid accuracy labels.</p>
-
-            <h3>Dataset & Decoder</h3>
+            <!-- ── Phase 1 ─────────────────────────── -->
+            <h2>Phase 1: Ground Truth Label Generation (CSP-LDA)</h2>
+            <p>We establish ground-truth MI performance with a subject-specific CSP-LDA decoder following the MetaBCI
+                framework.</p>
             <ul>
-                <li><strong>Dataset:</strong> PhysionetMI (Motor Imagery, 64 channels)</li>
-                <li><strong>Decoder:</strong> CSP (4 components) + LDA</li>
-                <li><strong>Filtering:</strong> 7-30 Hz Bandpass</li>
-                <li><strong>Validation:</strong> 5-fold Stratified Cross-Validation (Within-Subject)</li>
+                <li><strong>Dataset:</strong> PhysioNet EEG Motor Movement/Imagery — 109 subjects, 64 channels, 160 Hz
+                </li>
+                <li><strong>ROI:</strong> C3, Cz, C4 (+ FC1/FC2, CP1/CP2 for spatial context)</li>
+                <li><strong>Filtering:</strong> Mu-band 8–13 Hz, post-cue window 0.5–4.0 s</li>
+                <li><strong>CSP:</strong> Top <em>k</em>=4 + bottom <em>k</em>=4 spatial filters (8 components)</li>
+                <li><strong>Classifier:</strong> LDA with shrinkage regularization</li>
+                <li><strong>Validation:</strong> Stratified 5-fold CV within each subject → one literacy score per
+                    subject</li>
             </ul>
 
+            <!-- ── Phase 2 ─────────────────────────── -->
             <h2>Phase 2: Feature Extraction</h2>
-            <p>We extract neurophysiological markers from the <strong>first 15 trials</strong> of each subject. These
-                "early features" are hypothetical predictors of final BCI literacy.</p>
+            <p>We extract neurophysiological markers from the <strong>first 15 trials</strong> of left-vs-right MI runs
+                (runs 4/8/12) plus brief resting baselines (R01/R02). Two feature families are computed:</p>
 
+            <h3>2a. Subject-Level Trait & Task-Modulation Features</h3>
             <div class="card-grid">
                 <div class="nav-card">
-                    <span class="card-title">1. Spectral Features (12)</span>
-                    <span class="card-desc">
-                        <ul style="padding-left: 15px; margin-top: 5px; font-size: 0.8em; color: #888;">
-                            <li><strong>Band Power:</strong> Mu (8-13Hz) & Beta (13-30Hz) at C3, Cz, C4 (6 features)
-                            </li>
-                            <li><strong>ERD/ERS:</strong> Event-Related Desynchronization relative to baseline (6
-                                features)</li>
-                        </ul>
-                    </span>
+                    <span class="card-title">Resting Alpha & Asymmetry</span>
+                    <span class="card-desc" style="font-size: 0.8em; color: #888;">Welch PSD → 8–13 Hz power at
+                        C3/C4/Cz (eyes-closed); alpha asymmetry (C3 vs C4); relative alpha power (RPL)</span>
                 </div>
                 <div class="nav-card">
-                    <span class="card-title">2. Spatial Features (4)</span>
-                    <span class="card-desc">
-                        <ul style="padding-left: 15px; margin-top: 5px; font-size: 0.8em; color: #888;">
-                            <li>CSP Eigenvalue Ratio</li>
-                            <li>CSP Feature Mean & Std Dev</li>
-                            <li>Class Separability Index</li>
-                        </ul>
-                    </span>
+                    <span class="card-title">Resting Beta Power</span>
+                    <span class="card-desc" style="font-size: 0.8em; color: #888;">Lower beta (13–20 Hz) for ERD/ERS
+                        patterns; upper beta (20–30 Hz) for motor cortex state</span>
                 </div>
                 <div class="nav-card">
-                    <span class="card-title">3. Temporal Stability (7)</span>
-                    <span class="card-desc">
-                        <ul style="padding-left: 15px; margin-top: 5px; font-size: 0.8em; color: #888;">
-                            <li>Signal-to-Noise Ratio (Mean, Max, Std)</li>
-                            <li>Trial Variability (CV Mean, CV Std)</li>
-                            <li>Inter-trial Correlation</li>
-                            <li>P300 Stability Score</li>
-                        </ul>
-                    </span>
+                    <span class="card-title">SMR Strength, IAF & Aperiodic Exponent</span>
+                    <span class="card-desc" style="font-size: 0.8em; color: #888;">Laplacian-filtered C3/C4 PSD modeled
+                        as noise floor + Gaussian peaks → peak height, IAF, spectral slope</span>
+                </div>
+                <div class="nav-card">
+                    <span class="card-title">Alpha Variability</span>
+                    <span class="card-desc" style="font-size: 0.8em; color: #888;">SD / CV of alpha power in 2 s
+                        sliding windows (1 s overlap) — captures dynamic modulation capacity</span>
+                </div>
+                <div class="nav-card">
+                    <span class="card-title">Interhemispheric Coherence</span>
+                    <span class="card-desc" style="font-size: 0.8em; color: #888;">Welch coherence between C3 & C4 in
+                        mu/beta bands — lower coupling → more lateralized MI patterns</span>
+                </div>
+                <div class="nav-card">
+                    <span class="card-title">PSE, LZC & TAR</span>
+                    <span class="card-desc" style="font-size: 0.8em; color: #888;">Power spectral entropy (ΔH =
+                        H<sub>baseline</sub> − H<sub>task</sub>); Lempel-Ziv complexity gap; Theta/Alpha ratio
+                        modulation</span>
                 </div>
             </div>
-            <p style="text-align: center; font-size: 0.8rem; color: #666; margin-top: 10px;">Total Feature Vector
-                Dimension: <strong>R²³</strong></p>
 
-            <h2>Phase 3: Performance Prediction</h2>
-            <p>We train regression models to map Early Features (X) to Final Accuracy (Y).</p>
-            <pre><code>Model: Random Forest Regressor
-Input: 23 Features (from 15 trials)
-Target: 5-fold CV Accuracy (from all trials)
-Performance: R² = 0.24, Pearson r = 0.52</code></pre>
+            <h3>2b. Early-Trial Decodability Features</h3>
+            <div class="card-grid">
+                <div class="nav-card">
+                    <span class="card-title">Band Power (6)</span>
+                    <span class="card-desc" style="font-size: 0.8em; color: #888;">Mu (8–13 Hz) & Beta (13–30 Hz) at
+                        C3, Cz, C4</span>
+                </div>
+                <div class="nav-card">
+                    <span class="card-title">CSP Pattern Quality (4)</span>
+                    <span class="card-desc" style="font-size: 0.8em; color: #888;">Eigenvalue ratio, class
+                        separability, CSP feature mean/std</span>
+                </div>
+                <div class="nav-card">
+                    <span class="card-title">ERD/ERS Magnitude (6)</span>
+                    <span class="card-desc" style="font-size: 0.8em; color: #888;">Relative power change (task vs
+                        baseline) in mu & beta at C3/Cz/C4</span>
+                </div>
+                <div class="nav-card">
+                    <span class="card-title">Trial Variability (4)</span>
+                    <span class="card-desc" style="font-size: 0.8em; color: #888;">CV summary stats, inter-trial
+                        correlation, stability index</span>
+                </div>
+                <div class="nav-card">
+                    <span class="card-title">SNR (3)</span>
+                    <span class="card-desc" style="font-size: 0.8em; color: #888;">Mean squared amplitude ratio (task
+                        vs baseline) — mean, std, max</span>
+                </div>
+            </div>
 
-            <p>We compared multiple algorithms (XGBoost, SVM, Ridge) and found Random Forest to be the most robust to
-                noise and varying subject baselines.</p>
+            <!-- ── Phase 2.5 ─────────────────────────── -->
+            <h2>Phase 2.5: Merged Feature Pipeline</h2>
+            <p>Features from Phase 2a and 2b are merged by subject ID into a single design matrix: <strong>38 total
+                    merged features</strong> per subject for all 109 subjects.</p>
 
-            <h2>Limitations & Accuracy Context</h2>
-            <p>Our current predictions often hover around 55-65%. It is important to contextualize this:</p>
+            <!-- ── Feature Selection ─────────────────── -->
+            <h2>Feature Selection</h2>
+            <p>To reduce redundancy and control false discoveries:</p>
             <ul>
-                <li><strong>Zero-Calibration Challenge:</strong> This model assumes <em>no prior training</em> for the
-                    subject. In BCI, achieving >60% accuracy without user feedback training (Neurofeedback) is
-                    statistically significant for a 2-class problem.</li>
-                <li><strong>Subject Variability:</strong> The "BCI Illiteracy" phenomenon affects ~15-20% of the
-                    population, who naturally do not exhibit strong ERD signals. Our model correctly identifies these
-                    users as "Low Accuracy".</li>
-                <li><strong>Short-Time Window:</strong> We are predicting long-term performance based on only the first
-                    45 seconds of data (15 trials).</li>
+                <li><strong>Rank-based association:</strong> Spearman correlation with 5,000-permutation significance
+                    tests</li>
+                <li><strong>FDR correction:</strong> Benjamini–Hochberg at α = 0.05</li>
+                <li><strong>Minimum effect size:</strong> |ρ| ≥ 0.1</li>
+            </ul>
+            <p>This retained <strong>12 selected predictors</strong> for the final models:</p>
+            <div style="overflow-x: auto;">
+                <table
+                    style="width: 100%; border-collapse: collapse; margin-top: 15px; color: var(--text-secondary); font-size: 0.85rem;">
+                    <thead>
+                        <tr>
+                            <th
+                                style="text-align: left; padding: 8px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                Feature</th>
+                            <th
+                                style="text-align: right; padding: 8px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                ρ</th>
+                            <th
+                                style="text-align: right; padding: 8px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                <em>p</em><sub>FDR</sub>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td
+                                style="padding: 6px 8px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                csp_class_separability</td>
+                            <td
+                                style="padding: 6px 8px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.454</td>
+                            <td
+                                style="padding: 6px 8px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.002</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 6px 8px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                smr_strength</td>
+                            <td
+                                style="padding: 6px 8px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.399</td>
+                            <td
+                                style="padding: 6px 8px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.002</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 6px 8px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                erdrs_mu_C3</td>
+                            <td
+                                style="padding: 6px 8px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                −0.365</td>
+                            <td
+                                style="padding: 6px 8px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.002</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 6px 8px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                rpl</td>
+                            <td
+                                style="padding: 6px 8px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.314</td>
+                            <td
+                                style="padding: 6px 8px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.008</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3"
+                                style="padding: 6px 8px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); color: #666;">
+                                + 8 more (resting_rpl_alpha, resting_pse_avg, band_power_beta_C3/C4, erdrs_mu_Cz,
+                                snr_mean, mu_erd_imagined_C3, resting_tar)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- ── Phase 3 ─────────────────────────── -->
+            <h2>Phase 3: BCI Literacy Screening Models</h2>
+            <p>We trained two types of predictive models from merged feature vectors (standardized prior to fitting):
+            </p>
+
+            <h3>Regression</h3>
+            <p>Compared four models (Random Forest, Gradient Boosting, RBF-SVR, Ridge) using 5-fold CV. Random Forest
+                selected as best (R² = 0.302, Pearson <em>r</em> = 0.580).</p>
+
+            <h3>Binary Classifier</h3>
+            <p>Random Forest classifier separating HIGH vs LOW performers at accuracy threshold ≥ 0.65. Evaluated via
+                leave-one-out cross-validation (LOOCV) → 78.8% accuracy with stronger low-performer detection
+                (precision 0.833, recall 0.890).</p>
+
+            <!-- ── Preprocessing ─────────────────── -->
+            <h2>Preprocessing</h2>
+            <ul>
+                <li><strong>Re-referencing:</strong> Common-average reference</li>
+                <li><strong>Filtering:</strong> FIR bandpass 1–40 Hz</li>
+                <li><strong>Epoching:</strong> −1 to +4 s relative to cue onset; ±100 μV artifact rejection</li>
+                <li><strong>ICA:</strong> Picard, 20 components; Fp1 + AF7/AF8 as EOG proxies</li>
+                <li><strong>Laplacian:</strong> Subtracted mean of 4 nearest neighbors for ROI channels</li>
+                <li><strong>Imputation:</strong> Feature-wise median for missing feature groups</li>
             </ul>
 
-            <h2>System Architecture: Simulation vs. Real-time</h2>
-            <p>The current demonstration utilizes a <strong>Hardware-in-the-Loop (HIL) Simulation</strong> architecture.
-            </p>
+            <!-- ── System Architecture ────────────── -->
+            <h2>System Architecture: HIL Simulation</h2>
+            <p>The current demonstration uses a <strong>Hardware-in-the-Loop (HIL) Simulation</strong>:</p>
             <ul>
-                <li><strong>Signal Source (Simulator):</strong> Instead of a live headset, we stream pre-recorded,
-                    validated EEG data from the PhysioNet database. This acts as a "Digital Twin" of a patient.</li>
-                <li><strong>Processing Pipeline (Real-time):</strong> The feature extraction, signal processing, and ML
-                    decoding happen in real-time (on the fly) as the data is streamed.</li>
-                <li><strong>Justification:</strong> This allows us to validate the end-to-end latency and visualization
-                    pipeline deterministically before deployment with human subjects.</li>
+                <li><strong>Signal Source:</strong> Pre-recorded PhysioNet data streamed as a "Digital Twin"</li>
+                <li><strong>Processing:</strong> Feature extraction and ML decoding run in real-time</li>
+                <li><strong>Justification:</strong> Validates end-to-end latency deterministically before human
+                    deployment</li>
             </ul>
 
             <h2>Software Stack</h2>

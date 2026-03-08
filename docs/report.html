@@ -500,18 +500,28 @@
         <div class="abstract-block">
             <span class="abstract-label">Abstract</span>
             <p>
-                A predictive model is developed to assess Brain-Computer Interface (BCI) compatibility using minimal
-                EEG-derived features, enabling prospective users to determine whether investing time and resources in
-                BCI training is worthwhile. The extracted features come exclusively from resting-state recordings
-                without motor imagery (MI) trials, requiring only minutes of data collection rather than hours or
-                multiple sessions. Key features include resting-state alpha power (8–13 Hz), sensorimotor rhythm (SMR)
-                strength, power spectral entropy (PSE), Lempel-Ziv complexity (LZC), theta/alpha power ratio (TAR),
-                resting higher and lower beta power (20–30 Hz and 13–20 Hz, respectively), individual alpha frequency,
-                and interhemispheric coherence. By investigating these features collectively, we identify intrinsic
-                neural patterns distinguishing BCI-literate from BCI-illiterate individuals, addressing the notion that
-                BCI illiteracy may reflect immutable differences in baseline brain activity. Ground truth BCI
-                performance is evaluated using a Common Spatial Pattern (CSP) decoder applied to the PhysioNet EEG Motor
-                Movement/Imagery Dataset.
+                In order to determine the practicality of assessing a person's motor imagery brain-computer interface
+                (MI-BCI) compatibility through only low-sample EEG-derived features, we developed pre-screening models
+                to estimate an individual's MI-BCI literacy from compact EEG summaries, enabling prospective users to
+                gauge whether extended calibration and training are likely to be worthwhile. Rather than requiring
+                full-length MI calibration, our approach uses a brief resting-state baseline and only the first
+                <em>n</em>=15 imagery trials from left-vs-right hand motor imagery runs, extracted from a small
+                sensorimotor electrode set. We compute interpretable features capturing sensorimotor rhythm strength
+                and separability (mu/beta band power, ERD/ERS summaries, CSP-derived class separability,
+                SNR/variability) along with a small set of resting predictors (e.g., resting rhythm measures and
+                spectral summaries). Ground-truth literacy is defined as each subject's cross-validated CSP-LDA
+                decoding accuracy on the PhysioNet EEG Motor Movement/Imagery Dataset.
+            </p>
+            <p>
+                Using 5-fold cross-validation, the best-performing regression model (Random Forest) achieves a
+                moderate association with decoder-derived literacy (Pearson's <em>r</em>=0.580; R²=0.302 on subjects
+                with complete labels). For an additional operational screening view, we trained a Random Forest binary
+                classifier to separate high vs. low performers at an accuracy threshold of 0.65, achieving a LOOCV
+                accuracy of 0.788 with stronger performance on the majority low-performing class (precision 0.833,
+                recall 0.890) but low sensitivity to high performers (precision 0.619, recall 0.500). Overall, while
+                low-sample EEG features may not support precise individualized performance estimation, they can
+                reliably support coarse screening decisions, motivating rapid, data-efficient pre-screening in future
+                MI-BCI pipelines.
             </p>
         </div>
 
@@ -561,48 +571,51 @@
             </p>
             <p>
                 Despite these advances, a persistent limitation of MI-BCIs is the substantial inter-subject variability
-                in performance. A significant fraction of users, estimated to be around 20%, fail to achieve reliable
-                control even after training, a phenomenon commonly referred to as <em>BCI illiteracy</em> [6]. As a result,
-                current BCI deployment typically requires lengthy and resource-intensive EEG recording sessions,
-                calibration procedures, and user training phases before determining whether a given individual is
-                compatible with a specific BCI paradigm. This trial-and-error process is costly for researchers and
-                clinicians (up to hundreds or even thousands of dollars) and can be discouraging or emotionally taxing
-                for prospective users.
+                in performance. While most people require training to reliably use BCIs in general, a significant
+                fraction of users, estimated to be around 20%, fail to achieve reliable control even after training, a
+                phenomenon commonly referred to as <em>BCI illiteracy</em>. As a result, current BCI deployment
+                typically requires lengthy and resource-intensive EEG recording sessions, calibration procedures, and
+                user training phases before determining whether a given individual is compatible with a specific BCI
+                paradigm. This trial-and-error process is costly for researchers and clinicians (up to hundreds or even
+                thousands of dollars) and can be discouraging or emotionally taxing for prospective users.
             </p>
 
             <h3 class="subsection-title" id="prior-research">1.2 Prior Research</h3>
             <p>
-                Although prior research has identified several EEG-derived correlates of MI-BCI performance, such as
+                Although prior research has identified EEG-derived correlates of MI-BCI performance, such as
                 resting-state alpha power, sensorimotor rhythm (SMR) strength, oscillatory stability, and measures of
-                neural complexity, there is currently no widely adopted method for preliminary assessment of BCI
+                neural complexity, there is currently no widely adopted method for preliminary assessment of MI-BCI
                 compatibility. Most existing approaches either focus on a single predictor, require extensive task-based
-                data, or evaluate performance only after full BCI calibration. One existing model does exclusively use
-                resting state features but incorporates more extensive data collection and equipment use, as well as
-                additional metrics from the subject. Furthermore, they associated their performance predictions with
-                tasks. Consequently, there remains a critical gap between theoretical predictors of BCI literacy and a
-                practical, low-burden screening tool that can be applied early in the BCI pipeline.
+                data, or evaluate performance only after full BCI calibration.
+            </p>
+            <p>
+                One existing model does exclusively use resting-state features but requires more extensive data
+                collection and equipment (e.g., additional non-EEG measurements). Consequently, there remains a gap
+                between theoretical predictors of BCI literacy and a practical, low-burden screening tool that can be
+                applied early in the BCI pipeline. In this work, we target a <em>low-sample</em> screening setting by
+                combining brief resting recordings with only the first 15 motor imagery trials, while keeping features
+                interpretable and easy to compute.
             </p>
 
             <h3 class="subsection-title" id="goals">1.3 Goals, Relevant Data and Features</h3>
             <p>
-                We created a BCI literacy classifier designed to estimate an individual's compatibility with MI-based
-                BCIs using a small set of interpretable EEG-derived features. Rather than replacing a full BCI decoder,
-                our goal is to provide a lightweight, data-efficient pre-screening model that outputs a continuous
-                compatibility score between 0 and 1, reflecting expected MI-BCI performance. The proposed framework
-                integrates multiple complementary features capturing spectral power, oscillatory stability, neural
-                complexity, and hemispheric specialization. These features, all extracted from the resting state,
-                include Lempel–Ziv complexity, alpha power, beta power, power spectral entropy, SMR baseline strength,
-                theta–alpha power ratio, individual alpha frequency, and interhemispheric coherence. Additional metrics
-                related to these features were also extracted and incorporated.
+                We created BCI literacy predictors (one binary, one regression) designed to estimate an individual's
+                compatibility with MI-based BCIs using a small set of interpretable EEG-derived features. Rather than
+                replacing a full BCI decoder, our goal was to test the feasibility using solely lightweight,
+                data-efficient pre-screening models that can be applied early in the pipeline.
             </p>
             <p>
-                By synthesizing these features into a single predictive model and validating it against decoder-derived
-                BCI performance, we aim to reduce the time and data required to assess MI-BCI suitability, improve
-                transparency by quantifying the contribution of individual features to predicted compatibility, and
-                support more informed decision-making for researchers, clinicians, and end users. Ultimately, a reliable
-                preliminary BCI literacy predictor has the potential to streamline experimental design, reduce
-                unnecessary burden on participants, and accelerate the development and deployment of personalized BCI
-                systems.
+                Our framework supports two operational views of "literacy". The first is a continuous prediction of
+                expected MI decoder accuracy (regression), and the second is a binary screening decision that separates
+                likely high vs. low performers at a predefined accuracy threshold (classification). To remain
+                low-sample, features are derived from short resting baselines and only the first <em>n</em>=15 imagery
+                trials from left-vs-right motor imagery runs. The full feature set integrates complementary information
+                capturing baseline rhythm structure (resting spectral summaries), early-trial class separability
+                (CSP-derived separability, mu/beta bandpower), task modulation (ERD/ERS), and signal
+                quality/consistency (SNR and trial-to-trial variability). By synthesizing these features into a single
+                predictive model and validating it against decoder-derived MI performance, we aim to understand if it's
+                possible to reduce the time and data required to assess MI-BCI suitability while maintaining
+                interpretability and transparency.
             </p>
         </section>
 
@@ -614,43 +627,31 @@
 
             <h3 class="subsection-title" id="data-acquisition">2.1 Data Acquisition and Preprocessing</h3>
             <p>
-                EEG data were obtained from the PhysioNet EEG Motor Movement/Imagery Dataset [1], comprising recordings from
-                109 healthy subjects performing motor execution and motor imagery tasks. Each subject completed multiple
-                runs of four experimental paradigms: (1) opening and closing left or right fist, (2) imagining opening
-                and closing left or right fist, (3) opening and closing both fists or both feet, and (4) imagining
-                opening and closing both fists or both feet. EEG signals were recorded using the BCI2000 system [2] at 160
-                Hz sampling rate from 64 electrodes positioned according to the international 10–10 system, with
-                particular focus on motor cortex channels and their surroundings (C3, C4, Cz, FC1, FC2, CP1, CP2).
+                EEG data were obtained from the PhysioNet EEG Motor Movement/Imagery Dataset, comprising recordings
+                from 109 healthy subjects performing motor execution and motor imagery tasks. Each subject completed
+                runs of four paradigms: (1) left/right fist execution, (2) left/right fist imagery, (3) fists/feet
+                execution, and (4) fists/feet imagery. Signals were recorded with BCI2000 at 160 Hz from 64 electrodes
+                in the international 10-10 layout.
             </p>
             <p>
-                Raw EEG data underwent standard preprocessing using the MNE-Python library [4]. The raw data was mapped to a
-                3D coordinate system via a 10-05 standard montage in anticipation of ICA. Additionally, common average
-                re-referencing was utilized to give voltage readings from EEG channels a more standard reference and
-                minimize noise interference, which is particularly impactful in power calculations. Signals were
-                bandpass filtered between 1.0–40.0 Hz using a finite impulse response (FIR) filter with Hamming window
-                to remove low-frequency drifts and high-frequency noise while preserving motor-related oscillations.
+                Although 64 channels are available, our analyses focus on a pre-defined sensorimotor region of interest
+                (ROI) centered on C3, Cz, and C4, with adjacent channels FC1/FC2 and CP1/CP2 to capture nearby
+                premotor/somatosensory activity and the spatial spread of mu/beta rhythms.
             </p>
             <p>
-                For MI task features, the data were segmented into epochs spanning \(-1\) to \(+4\) seconds relative to
-                task cue onset (\(t=0\)), providing a 1-second baseline period and 4 seconds of task execution/imagery.
-                Epochs containing amplitude exceeding \(\pm 100\,\mu\)V were automatically rejected to eliminate
-                artifacts from eye movements, muscle activity, or electrode noise. A minimum of 5 valid epochs per
-                condition was required for subject inclusion in subsequent analyses. For resting state features,
-                continuous recordings from both the eyes-open (R01) and eyes-closed (R02) baselines were utilized,
-                without epoching.
+                Preprocessing was performed in MNE-Python. We applied common-average reference and FIR bandpass
+                filtering (1–40 Hz). For task-based analyses, epochs were extracted from −1 to +4 s relative to cue
+                onset, and epochs exceeding ±100 μV were rejected; subjects required at least 5 valid epochs per
+                condition. Resting-state features used baseline runs R01 (eyes open) and R02 (eyes closed). ICA
+                artifact removal (Picard; 20 components) was used to reduce ocular artifacts using Fp1 and AF7/AF8 as
+                EOG proxies. To improve spatial specificity, Laplacian filtering was applied for ROI channels by
+                subtracting the mean of the four nearest neighbors; Laplacian filtering was not applied to LZC
+                features.
             </p>
             <p>
-                To further minimize noise, ICA artifact removal was carried out, filtering for interfering activity from
-                eye blinks and movements. 20 independent components were used to capture artifacts via the Picard
-                method. This process was carried out by identifying activity captured by electrodes right above the eyes
-                (Fp1), as well as those on the sides of the temples (AF7 and AF8), which serve as proxies for the EOG
-                electrodes that were not present in the dataset.
-            </p>
-            <p>
-                To enhance spatial specificity and minimize the impact of nearby electrodes' activity, Laplacian
-                filtering was implemented. For each of our electrodes of interest (C3, C4, Cz, FC1, FC2, CP1, CP2),
-                their readings were filtered by subtracting the mean activity of the closest four surrounding
-                electrodes, resulting in activity in the cortical region being more identifiable.
+                Unless otherwise stated, resting features use R01/R02, while early-trial MI features use only the
+                first <em>n</em>=15 trials from the left-vs-right motor imagery runs (runs 4/8/12) and are computed
+                primarily on C3/Cz/C4.
             </p>
 
             <h3 class="subsection-title" id="features">2.2 Features</h3>
@@ -771,33 +772,43 @@
             <h3 class="subsection-title" id="dataset-construction">2.3 Dataset Construction and Statistical Analysis
             </h3>
             <p>
-                All extracted features were organized into a comprehensive dataset with subjects as rows and features as
-                columns. The raw dataset included per-trial values for all three repetitions of each task (Left/Right
-                Fist runs 1–3, Fists/Feet runs 1–3), yielding separate columns for each task-band-feature-condition
-                combination. A final compact dataset comprised \(109 \times 40\) features was constructed, with columns
-                for each task-modulation metric for both imagined and real conditions alongside resting baseline values,
-                along with further subdivisions such as by electrode. Missing values due to insufficient valid epochs
-                (&lt;5 per condition) or preprocessing failures were excluded on a per-subject basis
-                (\(N_{\text{final}}\) ranged from 95–109 depending on feature).
+                All extracted features were aggregated to one vector per subject and merged by subject ID into a single
+                design matrix. The merged feature set combines early-trial MI decodability features computed from only
+                the first <em>n</em>=15 imagery trials, additional engineered rhythm-strength/ERD summaries from our
+                EDA, and a small subset of resting-state predictors computed from R01/R02. This produces a fixed-length
+                feature vector per subject (38 total merged features).
+            </p>
+            <p>
+                To reduce redundancy and control false discoveries, we performed supervised feature selection using
+                rank-based association (Spearman), permutation-based significance testing, and Benjamini–Hochberg FDR
+                correction. The final regression model was trained on the selected feature subset (12 predictors). When
+                a subject was missing a feature group, we used feature-wise median imputation to preserve cohort size.
             </p>
 
-            <h3 class="subsection-title" id="classifier">2.4 Classifier</h3>
+            <h3 class="subsection-title" id="classifier">2.4 Ground-Truth MI Decoder (CSP-LDA)</h3>
             <p>
-                To establish ground truth BCI performance metrics, we implemented a Common Spatial Patterns (CSP)
-                decoder with Linear Discriminant Analysis (LDA) classification following the MetaBCI framework [12]. The CSP
-                algorithm serves as a spatial filtering technique that maximizes class separability by extracting
-                features that emphasize variance differences between motor imagery conditions while suppressing common
-                noise. For each subject, we selected the top \(k=4\) and bottom \(k=4\) spatial filters ranked by
-                eigenvalue magnitude, yielding 8 CSP components total.
+                To establish ground-truth MI performance, we implemented a subject-specific CSP-LDA decoder following
+                the MetaBCI framework. EEG was filtered to the mu band (8–13 Hz) and cropped to a post-cue window
+                (0.5–4.0 s). For each subject, we fit CSP and retained the top <em>k</em>=4 and bottom <em>k</em>=4
+                spatial filters (8 components total); log-variance features from CSP-projected signals were classified
+                using LDA with shrinkage regularization. Decoder accuracy was evaluated with stratified 5-fold
+                cross-validation within subject to produce a robust subject-level "BCI literacy" score used as the
+                downstream prediction target.
+            </p>
+
+            <h3 class="subsection-title" id="screening-models">2.5 BCI Literacy Screening Models</h3>
+            <p>
+                We trained supervised models to predict the decoder-derived literacy score from the merged feature
+                vectors. Features were standardized prior to model fitting. We compared four regression models (Random
+                Forest, Gradient Boosting, RBF-SVR, and Ridge regression) using 5-fold cross-validation, selecting the
+                best model by mean R² while also reporting RMSE/MAE and correlation with ground-truth accuracy.
             </p>
             <p>
-                Log-variance features were computed from the spatially filtered signals and passed to an LDA classifier
-                with least-squares solver and 0.5 shrinkage regularization to prevent overfitting. This architecture was
-                chosen because CSP-LDA represents the gold standard for motor imagery BCIs, offering interpretable
-                spatial patterns that directly reflect Event-Related Desynchronization/Synchronization (ERD/ERS)
-                phenomena in sensorimotor cortex. We evaluated decoder performance using stratified 5-fold
-                cross-validation within each subject to ensure robust accuracy estimates while preserving class balance
-                across folds.
+                For an operational screening decision, we additionally trained a Random Forest binary classifier that
+                labels subjects as high-performing if decoder accuracy ≥ 0.65 and low-performing otherwise, as previous
+                studies determined that to be around the threshold between BCI-literate and BCI-illiterate people. This
+                classifier was evaluated using leave-one-out cross-validation (LOOCV), and we report accuracy and
+                class-wise precision/recall/F1.
             </p>
         </section>
 
@@ -815,102 +826,455 @@
 
             <div class="figure-grid">
 
-                <!-- Fig 1 -->
+                <!-- Fig 1: PSE -->
                 <div class="figure-card">
                     <div class="figure-card-header">
                         <span class="figure-num">FIG 01</span>
-                        <span class="figure-caption-title">Signal Time Series — Motor Imagery Power Spectral
-                            Entropy</span>
+                        <span class="figure-caption-title">Normalized PSD Curves — PSE Extreme Subjects</span>
                     </div>
                     <div class="figure-img-wrap">
-                        <img src="images/entropy.png"
-                            alt="Alpha-band amplitude time series comparing high (S016) and low (S033) motor imagery entropy subjects">
+                        <img src="images/pse.png"
+                            alt="Normalized PSD curves comparing high vs low motor imagery PSE subjects">
                     </div>
                     <div class="figure-caption">
-                        Alpha-band (8–13 Hz) amplitude time series for subjects with high (S016, top) and low (S033,
-                        bottom) motor imagery alpha entropy (\(\Delta H_{\text{imagined}}\)). The time axis spans \(-1\)
-                        to \(+4\) seconds relative to motor imagery cue onset (\(t=0\), marked by vertical dashed line),
-                        with amplitude measured in volts. The high-entropy subject (S016) exhibits irregular, volatile
-                        oscillations with frequent amplitude excursions and minimal repetitive structure, indicating a
-                        noisy, unpredictable signal that impedes BCI control. In contrast, the low-entropy subject
-                        (S033) displays more regular oscillations with smoother amplitude envelopes and clearer
-                        quasi-periodic structure — facilitating reliable classification. This difference validates
-                        entropy as a meaningful marker of BCI compatibility.
+                        Comparison of the average power distribution across frequency bands for high vs. low
+                        motor-imagery PSE in the Theta-Alpha band. High-entropy subjects show power being distributed
+                        across frequency bands, while low-entropy subjects have power concentrated in a select few
+                        frequencies (in this case our low-entropy subject has power heavily concentrated at and around
+                        8 Hz). This supports PSE as a proxy for the degree of organized sensorimotor rhythm engagement
+                        during MI.
                     </div>
                 </div>
 
-                <!-- Fig 2 -->
+                <!-- Fig 2: TAR -->
                 <div class="figure-card">
                     <div class="figure-card-header">
                         <span class="figure-num">FIG 02</span>
-                        <span class="figure-caption-title">Recurrence Pattern — Motor Imagery Lempel-Ziv
-                            Complexity</span>
+                        <span class="figure-caption-title">Channel-wise TAR Comparison — TAR Extreme
+                            Subjects</span>
                     </div>
                     <div class="figure-img-wrap">
-                        <img src="images/lzc_imagined.png"
-                            alt="Recurrence matrices for high (S096) and low (S101) motor imagery LZC subjects">
+                        <img src="images/tar.png" alt="TAR values across C3/Cz/C4 for high vs low TAR subjects">
                     </div>
                     <div class="figure-caption">
-                        Recurrence matrices for alpha-band signals from subjects with high (S096, left) and low (S101,
-                        right) motor imagery Lempel-Ziv complexity (LZC). Recurrence plots visualize temporal
-                        self-similarity: dark regions indicate time points where the signal revisits similar states,
-                        while light regions denote unique, non-recurring patterns. The high-LZC subject (S096) exhibits
-                        a diffuse, scattered recurrence pattern with few coherent structures — the signal rarely
-                        revisits previous states, reflecting high unpredictability that impedes BCI decoding. The
-                        low-LZC subject (S101) displays more prominent diagonal lines and localized block structures,
-                        signifying stronger temporal self-similarity and consistent motor imagery patterns — a desirable
-                        trait for BCI control.
+                        Comparison of TAR across C3/Cz/C4 for high- vs. low-TAR subjects during imagery. Higher TAR
+                        indicates relatively stronger theta vs. alpha activity (often associated with increased
+                        cognitive load or reduced readiness), while lower TAR suggests a more favorable attentional
+                        state for consistent MI modulation. The channel-wise view checks whether effects are global or
+                        localized over sensorimotor cortex.
                     </div>
                 </div>
 
-                <!-- Fig 3 -->
+                <!-- Fig 3: LZC Recurrence -->
                 <div class="figure-card">
                     <div class="figure-card-header">
                         <span class="figure-num">FIG 03</span>
-                        <span class="figure-caption-title">Time-Frequency Difference — Real vs. Imagined Alpha LZC
-                            Gap</span>
+                        <span class="figure-caption-title">Recurrence Plots — LZC Extreme Subjects</span>
                     </div>
                     <div class="figure-img-wrap">
-                        <img src="images/lzc_gap.png"
-                            alt="Time-frequency representations of real vs imagined movement difference in alpha band for high-gap (S050) and low-gap (S018) subjects">
+                        <img src="images/lzc.png"
+                            alt="Recurrence plots for alpha-band signals in high vs low LZC subjects">
                     </div>
                     <div class="figure-caption">
-                        Time-frequency representations (TFR) of the difference between real movement and imagined
-                        movement in the alpha band (8–13 Hz). The colormap encodes log-ratio power differences: red
-                        indicates regions where real movement exhibits stronger power modulation than imagery, while
-                        blue indicates stronger imagery modulation. The high-gap subject (S050, left) displays extensive
-                        red regions in the 9–11 Hz range during movement (0–4 s), indicating real movement produces
-                        substantial ERD while motor imagery fails to elicit comparable modulation — reflecting poor
-                        imagery fidelity. The low-gap subject (S018, right) shows predominantly blue regions, indicating
-                        motor imagery produces modulation equal to or exceeding real movement, closely mimicking
-                        execution-related neural dynamics — a hallmark of BCI literacy.
-                    </div>
-                </div>
-
-                <!-- Fig 4 -->
-                <div class="figure-card">
-                    <div class="figure-card-header">
-                        <span class="figure-num">FIG 04</span>
-                        <span class="figure-caption-title">Comparison Bar Graph — Theta/Alpha Power Ratio</span>
-                    </div>
-                    <div class="figure-img-wrap">
-                        <img src="images/tar_bar.png"
-                            alt="Theta/alpha power ratio values across motor cortex channels C3, Cz, C4 for high (S086) and low (S003) TAR subjects">
-                    </div>
-                    <div class="figure-caption">
-                        Theta/alpha power ratio (TAR) values across motor cortex channels (C3, Cz, C4) for subjects with
-                        high (S086, red) and low (S003, blue) motor imagery TAR. The high-TAR subject (S086) exhibits
-                        elevated theta/alpha ratios across all channels, indicating heightened cognitive load or
-                        drowsiness during motor imagery — introducing task-irrelevant neural activity that obscures
-                        motor imagery-specific patterns and reducing classification accuracy. The low-TAR subject (S003)
-                        maintains lower ratios, reflecting a relaxed-yet-focused attentional state that allows motor
-                        imagery to produce clear, discriminative neural modulation uncontaminated by attention-related
-                        artifacts. The grouped bar format highlights the consistent TAR elevation in high-TAR subjects,
-                        validating this metric as a marker of BCI-incompatible attentional states.
+                        Recurrence plots for alpha-band signals in high- vs. low-LZC subjects. Band-limited alpha
+                        signals will almost always show some structure because they're oscillatory. However, the high
+                        LZC corresponds to more diffuse recurrence structures (fewer repeated states, more speckles),
+                        whereas lower LZC shows more repeated motifs/diagonal structure consistent with more clean
+                        dynamics. Note that in the final models we did not incorporate LZC as it had negligible
+                        significance compared to other features.
                     </div>
                 </div>
 
             </div>
+
+            <!-- Fig 4: Model Performance Table -->
+            <h3 class="subsection-title" style="margin-top: 40px;">Model Performance Comparison (Regression)</h3>
+            <div style="overflow-x: auto;">
+                <table
+                    style="width: 100%; border-collapse: collapse; margin-top: 20px; color: var(--text-secondary); font-size: 0.9rem;">
+                    <thead>
+                        <tr>
+                            <th
+                                style="text-align: left; padding: 10px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                Model</th>
+                            <th
+                                style="text-align: left; padding: 10px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                RMSE</th>
+                            <th
+                                style="text-align: left; padding: 10px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                MAE</th>
+                            <th
+                                style="text-align: left; padding: 10px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                R²</th>
+                            <th
+                                style="text-align: left; padding: 10px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                Pearson <em>r</em></th>
+                            <th
+                                style="text-align: left; padding: 10px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                Spearman ρ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="background: rgba(0, 255, 204, 0.05);">
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); color: var(--accent-cyan); font-weight: 600;">
+                                Random Forest</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.125 ± 0.020</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.099 ± 0.015</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.302 ± 0.097</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.580</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.474</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                Gradient Boosting</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.134 ± 0.019</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.107 ± 0.017</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.169 ± 0.201</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.524</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.428</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                SVM</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.131 ± 0.028</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.105 ± 0.021</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.246 ± 0.112</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.492</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.413</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                Ridge Regression</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.128 ± 0.025</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.101 ± 0.017</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.269 ± 0.131</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.530</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                0.428</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="font-size: 0.8rem; color: #666; margin-top: 12px;">
+                Random Forest performed best overall, achieving the lowest error (RMSE/MAE) and the highest R²,
+                Pearson correlation, and Spearman correlation, and was therefore selected as our primary regression
+                model. We assumed Random Forest would also be the optimal model for binary classification.
+            </p>
+
+            <!-- Fig 5: Feature Selection Table -->
+            <h3 class="subsection-title" style="margin-top: 40px;">Spearman Feature Selection Results (FDR α = 0.05)
+            </h3>
+            <div style="overflow-x: auto;">
+                <table
+                    style="width: 100%; border-collapse: collapse; margin-top: 20px; color: var(--text-secondary); font-size: 0.9rem;">
+                    <thead>
+                        <tr>
+                            <th
+                                style="text-align: left; padding: 10px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                Feature</th>
+                            <th
+                                style="text-align: right; padding: 10px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                ρ</th>
+                            <th
+                                style="text-align: right; padding: 10px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                <em>p</em><sub>raw</sub>
+                            </th>
+                            <th
+                                style="text-align: right; padding: 10px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                <em>p</em><sub>FDR</sub>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                band_power_beta_C3</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                −0.264</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.008</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.036</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                band_power_beta_C4</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                −0.258</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.011</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.038</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                csp_class_separability</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.454</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.000</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.002</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                erdrs_mu_C3</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                −0.365</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.000</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.002</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                erdrs_mu_Cz</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                −0.257</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.011</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.038</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                snr_mean</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                −0.247</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.013</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.041</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                rpl</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.314</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.001</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.008</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                smr_strength</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.399</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.000</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.002</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                mu_erd_imagined_C3</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                −0.251</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.011</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.038</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                resting_rpl_alpha</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.293</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.004</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.023</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                resting_tar</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                −0.239</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.016</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.046</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                resting_pse_avg</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                −0.284</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.006</td>
+                            <td
+                                style="padding: 8px 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.030</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="font-size: 0.8rem; color: #666; margin-top: 12px;">
+                The strongest predictors include CSP class separability, SMR strength, rhythm-length/power summaries
+                (RPL/beta power), ERD/ERS measures in the mu band, and a small set of resting predictors (resting TAR,
+                resting PSE, resting RPL<sub>α</sub>), supporting the interpretation that both early-trial
+                separability and baseline rhythm structure inform BCI literacy screening.
+            </p>
+
+            <!-- Fig 6: Classifier Table -->
+            <h3 class="subsection-title" style="margin-top: 40px;">RF Classifier Performance (LOOCV)</h3>
+            <div style="overflow-x: auto;">
+                <table
+                    style="width: 100%; max-width: 500px; border-collapse: collapse; margin-top: 20px; color: var(--text-secondary); font-size: 0.9rem;">
+                    <thead>
+                        <tr>
+                            <th
+                                style="text-align: left; padding: 10px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                Class</th>
+                            <th
+                                style="text-align: right; padding: 10px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                <em>n</em>
+                            </th>
+                            <th
+                                style="text-align: right; padding: 10px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                Precision</th>
+                            <th
+                                style="text-align: right; padding: 10px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                Recall</th>
+                            <th
+                                style="text-align: right; padding: 10px; border-bottom: 2px solid var(--grid-line); color: var(--accent-cyan); font-weight: 400; letter-spacing: 1px;">
+                                F1</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                LOW</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                73</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.833</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.890</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.861</td>
+                        </tr>
+                        <tr>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono);">
+                                HIGH</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                26</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.619</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.500</td>
+                            <td
+                                style="padding: 10px; border-bottom: 1px solid var(--grid-line); font-family: var(--font-mono); text-align: right;">
+                                0.553</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="font-size: 0.8rem; color: #666; margin-top: 12px;">
+                <strong style="color: var(--accent-cyan);">LOOCV Accuracy: 78.8%</strong> · Confusion Matrix:
+                [[65, 8], [13, 13]] (rows = actual LOW/HIGH; columns = predicted LOW/HIGH)
+            </p>
+
         </section>
 
         <!-- ══════════════════════════════════════ -->
@@ -919,16 +1283,38 @@
         <section class="report-section" id="results">
             <h2 class="section-title"><span class="section-num">04</span> Results</h2>
             <p>
-                We defined “literacy” using a subject-specific CSP-LDA decoder and then asked whether compact EEG
-                summaries could predict that decoder-derived score. The full merged dataset contained 38 subject-level
-                features, which we reduced to 12 selected predictors for the final regression model. Among the models we
-                tested, Random Forest performed best, achieving a Pearson correlation of 0.580 and an R² of 0.302 on the
-                99 subjects with complete labels - evidence that even early, lightweight EEG features contain meaningful
-                signal about later MI-BCI performance.
+                We constructed a merged subject-level feature representation combining early-trial MI decodability
+                features computed from the first <em>n</em>=15 imagery trials (runs 4/8/12; channels C3/Cz/C4;
+                7–30 Hz), selected EDA-derived rhythm features (e.g., SMR/RPL/ERD summaries), and statistically
+                validated resting-state predictors (resting RPL<sub>α</sub>, resting TAR, resting PSE). The merged
+                dataset contains 38 features for all 109 subjects.
+            </p>
+            <p>
+                We trained and compared four regressors (Random Forest, Gradient Boosting, RBF-SVR, Ridge) using
+                5-fold cross-validation on subjects with both features and ground-truth decoder labels
+                (<em>N</em>=99). Random Forest performed best overall (RMSE 0.125±0.020, MAE 0.099±0.015,
+                R²=0.302±0.097, Pearson's <em>r</em>=0.580, Spearman ρ=0.474) and was selected as our primary
+                regression model.
+            </p>
+            <p>
+                Using Spearman correlation with permutation-based <em>p</em>-values (5000 permutations) and
+                Benjamini–Hochberg FDR correction (α=0.05), we retained 12 predictors for training. The largest
+                Random Forest importances were assigned to CSP class separability and SMR strength, followed by
+                resting spectral summaries (resting PSE, resting TAR), RPL, ERD/ERS (mu band), and beta power
+                features, supporting the physiological interpretation that both early-trial separability and baseline
+                rhythm structure contribute to literacy prediction.
+            </p>
+            <p>
+                For a practical screening decision, we trained a Random Forest classifier using an accuracy threshold
+                of 0.65 to define high vs. low performers. Under LOOCV, the classifier achieved accuracy 0.788 with
+                confusion matrix [[65, 8], [13, 13]] (rows = true LOW/HIGH; columns = predicted LOW/HIGH).
+                Performance was stronger for the majority LOW class (precision 0.833, recall 0.890) than for the HIGH
+                class (precision 0.619, recall 0.500), indicating the model is more reliable at identifying likely
+                low performers than confidently detecting high performers.
             </p>
             <div class="figure-card" style="margin-top: 30px;">
                 <div class="figure-card-header">
-                    <span class="figure-num">FIG 05</span>
+                    <span class="figure-num">FIG 07</span>
                     <span class="figure-caption-title">Regression Model Performance</span>
                 </div>
                 <div class="figure-img-wrap">
@@ -940,24 +1326,9 @@
                     correlation between early EEG features and BCI literacy scores.
                 </div>
             </div>
-        </section>
-
-        <!-- ══════════════════════════════════════ -->
-        <!-- SECTION 5: DISCUSSION -->
-        <!-- ══════════════════════════════════════ -->
-        <section class="report-section" id="discussion">
-            <h2 class="section-title"><span class="section-num">05</span> Discussion</h2>
-            <p>
-                We also framed the task as a practical screening decision: who is likely to be a low performer, and who
-                may be worth further calibration? Using a decoder-accuracy threshold of 0.65, our Random Forest
-                classifier reached 78.8% leave-one-out accuracy, with especially strong performance in identifying
-                likely low performers. In real terms, that means this system shows promise as a fast, data-efficient
-                first-pass filter - one that could reduce wasted calibration time, guide users toward better BCI
-                pathways earlier, and make MI-BCI systems more practical to deploy.
-            </p>
             <div class="figure-card" style="margin-top: 30px;">
                 <div class="figure-card-header">
-                    <span class="figure-num">FIG 06</span>
+                    <span class="figure-num">FIG 08</span>
                     <span class="figure-caption-title">Practical Screening Decision</span>
                 </div>
                 <div class="figure-img-wrap">
@@ -972,16 +1343,62 @@
         </section>
 
         <!-- ══════════════════════════════════════ -->
+        <!-- SECTION 5: DISCUSSION -->
+        <!-- ══════════════════════════════════════ -->
+        <section class="report-section" id="discussion">
+            <h2 class="section-title"><span class="section-num">05</span> Discussion</h2>
+            <p>
+                Across models, the combined low-sample feature representation yielded consistent predictive signal for
+                decoder-derived MI literacy. Random Forest regression outperformed Gradient Boosting, RBF-SVR, and
+                Ridge on average, suggesting the mapping from compact EEG summaries to literacy is moderately
+                non-linear and benefits from interaction modeling.
+            </p>
+            <p>
+                The binary classifier provides an operational framing of screening: the model achieves strong recall
+                for the majority low-performing class, meaning it can effectively flag individuals who are unlikely to
+                achieve reliable control under the tested MI paradigm. However, sensitivity for high performers is
+                low, so the classifier is best interpreted as a conservative filter rather than a definitive "pass"
+                decision. In practice, this supports a two-stage workflow: use low-sample screening to identify likely
+                low performers early, then reserve longer calibration or alternative paradigms for
+                borderline/high-confidence
+                candidates.
+            </p>
+            <p>
+                Feature importance patterns are consistent with established MI-BCI mechanisms: CSP class separability
+                and SMR strength dominate, with additional contributions from ERD/ERS and beta power measures
+                (early-trial decodability) and a small set of resting predictors (resting TAR/PSE/RPL<sub>α</sub>).
+                These results suggest that both baseline rhythm structure and early-trial separability carry
+                complementary information about literacy.
+            </p>
+
+            <h3 class="subsection-title">Potential Improvements, Future Work</h3>
+            <p>
+                A key methodological requirement for final reporting is that scaling and supervised feature selection
+                occur strictly within each cross-validation fold to avoid information leakage and inflated estimates.
+                We also restricted filtering to the mu band (8–13 Hz) as it represents the primary oscillatory
+                correlate of sensorimotor activity during MI. While standard CSP-LDA pipelines commonly include the
+                beta band (8–30 Hz), which may contribute additional discriminative information, we prioritized
+                mu-band activity to minimize spectral noise from non-motor sources. Future work should evaluate
+                whether extending to 8–30 Hz improves ground-truth decoder sensitivity, reporting nested or
+                pipeline-based CV results, and/or validating generalization on additional datasets and populations.
+            </p>
+        </section>
+
+        <!-- ══════════════════════════════════════ -->
         <!-- SECTION 6: CONCLUSION -->
         <!-- ══════════════════════════════════════ -->
         <section class="report-section" id="conclusion">
             <h2 class="section-title"><span class="section-num">06</span> Conclusion</h2>
             <p>
-                In conclusion, our approach demonstrates that comprehensive resting-state and minimal-trial EEG features
-                can reliably estimate a subject’s compatibility with motor imagery BCIs. By deploying a Random Forest
-                classifier as an initial screening step, researchers and clinicians can significantly reduce the costs
-                and frustration associated with BCI calibration. Future work will explore larger datasets and
-                cross-session validation to further solidify the predictive power of these lightweight features.
+                We developed a low-sample pre-screening pipeline for MI-BCI literacy that combines a brief resting
+                baseline with only the first <em>n</em>=15 motor imagery trials to compute compact, interpretable
+                EEG-derived features. The best regression model (Random Forest) achieved Pearson's <em>r</em>=0.580
+                and R²=0.302 against decoder-derived ground truth on subjects with complete labels (<em>N</em>=99).
+                For practical screening, a Random Forest classifier at a 0.65 accuracy threshold achieved LOOCV
+                accuracy 0.788, with high reliability in identifying low performers and moderate sensitivity to high
+                performers. Overall, these results support the feasibility of rapid, data-efficient pre-screening to
+                reduce wasted calibration time, while motivating future work on leakage-free evaluation, improved
+                high-performer detection, and external validation.
             </p>
         </section>
 
@@ -1031,6 +1448,30 @@
                 <li>Neuper, C., Wörtz, M., &amp; Pfurtscheller, G. (2006). ERD/ERS patterns reflecting sensorimotor
                     activation and deactivation. <em>Progress in Brain Research</em>, 159, 211–222.</li>
             </ul>
+        </section>
+
+        <!-- ══════════════════════════════════════ -->
+        <!-- APPENDIX -->
+        <!-- ══════════════════════════════════════ -->
+        <section class="report-section" id="appendix">
+            <h2 class="section-title"><span class="section-num">A</span> Appendix</h2>
+            <h3 class="subsection-title">Supplementary Graphics</h3>
+            <div class="figure-card" style="margin-top: 20px;">
+                <div class="figure-card-header">
+                    <span class="figure-num">FIG A1</span>
+                    <span class="figure-caption-title">64-Channel EEG Electrode Distribution</span>
+                </div>
+                <div class="figure-img-wrap">
+                    <img src="images/64_channel_sharbrough.png"
+                        alt="Distribution of electrodes in the 64-channel EEG headset used for the PhysioNet dataset"
+                        style="max-width: 55%;">
+                </div>
+                <div class="figure-caption">
+                    Distribution of electrodes in the EEG headset used to create the PhysioNet EEG Motor
+                    Movement/Imagery Dataset. Sensorimotor ROI electrodes used in this study (C3, Cz, C4, FC1, FC2,
+                    CP1, CP2) are located near/around the center of the scalp.
+                </div>
+            </div>
         </section>
 
     </div>
