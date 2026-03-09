@@ -614,7 +614,7 @@ canvas {
 }
 
 .mini-viz-container {
-    height: 80px;
+    height: 220px;
     margin-top: 8px;
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid var(--grid-line);
@@ -938,8 +938,11 @@ pre {
 }
 
 .card-title {
-    font-size: 1.2rem;
+    font-size: 1rem;
     color: var(--accent-cyan);
+    word-break: break-all;
+    overflow-wrap: break-word;
+    line-height: 1.4;
 }
 
 .card-desc {
