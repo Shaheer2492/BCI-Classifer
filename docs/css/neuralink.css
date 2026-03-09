@@ -1002,3 +1002,285 @@ pre {
     z-index: 10;
     padding-bottom: 80px;
 }
+
+/* ════════════════════════════════════════════
+   INLINE CITATION STYLES
+   ════════════════════════════════════════════ */
+.cite {
+    color: var(--accent-cyan);
+    font-family: var(--font-mono);
+    font-size: 0.78em;
+    font-weight: 500;
+    cursor: pointer;
+    vertical-align: super;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s, text-shadow 0.2s;
+    padding: 0 1px;
+}
+
+.cite:hover {
+    border-bottom-color: var(--accent-cyan);
+    text-shadow: 0 0 6px rgba(0, 255, 204, 0.5);
+}
+
+.ref-highlight {
+    animation: ref-flash 1.6s ease-out;
+}
+
+@keyframes ref-flash {
+    0% {
+        background: rgba(0, 255, 204, 0.25);
+    }
+
+    100% {
+        background: transparent;
+    }
+}
+
+/* ════════════════════════════════════════════
+   MOBILE RESPONSIVE — ALL PAGES
+   ════════════════════════════════════════════ */
+
+/* ── Tablet & below (≤ 900px) ── */
+@media (max-width: 900px) {
+
+    /* Allow the page to scroll on content pages */
+    body {
+        overflow-y: auto;
+        height: auto;
+        width: 100%;
+    }
+
+    /* App container: full scroll */
+    .app-container {
+        height: auto;
+        padding: 12px;
+    }
+
+    /* ── ml-demo: collapse 3-col grid to single column ── */
+    .main-grid {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto;
+        gap: 12px;
+    }
+
+    /* Score gauge — shrink canvas height */
+    .score-gauge-container {
+        height: 180px;
+    }
+
+    /* Brain viz shrinks */
+    .brain-viz {
+        height: 180px;
+    }
+
+    .decoding-ring {
+        width: 150px;
+        height: 150px;
+    }
+
+    /* Status bar: wrap on small screens */
+    .status-bar {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .status-indicators {
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    /* ── Content pages: shrink padding ── */
+    .content-container {
+        padding: 16px 16px 40px;
+        max-width: 100%;
+    }
+
+    /* ── Nav bar ── */
+    .main-nav {
+        flex-wrap: wrap;
+        gap: 10px 16px;
+        margin-bottom: 24px;
+    }
+
+    .nav-link {
+        font-size: 0.8rem;
+    }
+
+    /* ── Card grids: 1 column ── */
+    .card-grid {
+        grid-template-columns: 1fr;
+        margin-top: 20px;
+        gap: 12px;
+    }
+
+    .nav-card {
+        padding: 20px;
+    }
+
+    /* ── Tables: horizontal scroll ── */
+    table {
+        font-size: 0.8rem;
+    }
+
+    /* ── Report nav ── */
+    .report-nav {
+        padding: 10px 16px;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .nav-links {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    /* ── Report container ── */
+    .report-container {
+        max-width: 100%;
+        padding: 0 12px;
+    }
+
+    /* ── Headings ── */
+    .report-title {
+        font-size: clamp(1.4rem, 5vw, 2.5rem);
+    }
+
+    .section-title {
+        font-size: 1.3rem;
+    }
+
+    /* ── Figure images ── */
+    .figure-img-wrap img {
+        max-width: 100% !important;
+    }
+
+    /* ── TOC panel ── */
+    .toc-panel {
+        display: none;
+        /* Hide TOC sidebar on mobile — use scroll */
+    }
+
+    /* ── Author grid ── */
+    .author-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px;
+    }
+
+    /* ── Stats grid (results page) ── */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+/* ── Phone (≤ 600px) ── */
+@media (max-width: 600px) {
+
+    /* ── ml-demo status bar: hide non-essential indicators ── */
+    .indicator:not(.connection) {
+        display: none;
+    }
+
+    /* Full-width panels with reduced padding */
+    .panel {
+        padding: 12px;
+    }
+
+    /* Gauge smaller */
+    .score-gauge-container {
+        height: 140px;
+    }
+
+    /* Mini viz taller for readability */
+    .mini-viz-container {
+        height: 160px;
+    }
+
+    /* ── Homepage hero ── */
+    .hero-title {
+        font-size: clamp(1.8rem, 9vw, 3rem);
+        letter-spacing: 4px;
+    }
+
+    /* Scrollytelling: full width text cards */
+    .step {
+        padding: 0 5%;
+    }
+
+    .step__content {
+        max-width: 100%;
+        padding: 24px 20px;
+    }
+
+    .step:nth-child(even) {
+        justify-content: flex-start;
+    }
+
+    /* ── Nav ── */
+    .nav-link {
+        font-size: 0.75rem;
+        letter-spacing: 0.5px;
+    }
+
+    /* ── Report ── */
+    .report-title {
+        font-size: 1.4rem;
+        letter-spacing: 1px;
+    }
+
+    .author-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    .report-links-bar {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    /* Stats grid: single column */
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Subsection blocks */
+    .subsection-block {
+        padding: 12px;
+    }
+
+    /* Figure cards full width */
+    .figure-card {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    /* Tables: enforce horizontal scroll */
+    .report-section div[style*="overflow-x"],
+    div[style*="overflow-x: auto"] {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Console log reduce height */
+    .console-log {
+        max-height: 100px;
+    }
+
+    /* Benchmark bar wider tap targets */
+    .benchmark-marker .marker-label {
+        font-size: 0.55rem;
+    }
+
+    /* Milestone text smaller */
+    .milestone-text {
+        font-size: 0.7rem;
+    }
+
+    /* Back to top button */
+    .back-top {
+        bottom: 16px;
+        right: 12px;
+        padding: 6px 10px;
+        font-size: 0.6rem;
+    }
+}
