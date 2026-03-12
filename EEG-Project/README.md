@@ -1,4 +1,4 @@
-# EEG-Project : Imagined vs Actual Movement Analysis
+# EEG-Project : Imagined vs Actual Movement Analysis (Quarter 1)
 
 **Author:** Shaheer Khan , Daniel Mansperger, Andrew Li  
 **Date:** October 2025
@@ -85,3 +85,194 @@ group_imagined_vs_actual/
 - tqdm (progress bars)
 - 8+ GB RAM recommended
 - Multi-core CPU for parallel processing
+
+
+
+
+
+
+
+
+# EEG Project: MI BCI Compatibility Classifier Project (Quarter 2)
+
+**Author:** Shaheer Khan, Daniel Mansperger, Andrew Li  
+**Date:** Jan–Mar 2025
+
+## Overview
+
+Our Quarter 2 project focuses on building a **low-sample MI-BCI literacy screening pipeline**. This repository contains the **data preprocessing, feature extraction, and exploratory visualizations** on PhysioNet’s EEG Motor Movement/Imagery dataset. We extract compact, interpretable EEG-derived features (primarily resting-state and other low-burden summaries) and generate decoder-derived “ground truth” labels used downstream for model training.
+
+> **Model training + web demo** are maintained in the companion repo:  
+> https://github.com/Shaheer2492/BCI-Classifer
+
+### What this repo produces (outputs)
+- Subject-level feature tables (CSV), including the final **resting-state feature table**
+- Decoder-derived ground-truth labels (JSON/CSV)
+- Visualizations used for the paper/poster
+
+---
+
+## Features Extracted
+- Power Spectral Entropy (PSE)
+- Lempel–Ziv Complexity (LZC)
+- Theta–Alpha Power Ratio (TAR)
+- Alpha and Beta power (including sub-bands)
+- Alpha asymmetry
+- Alpha power variance
+- Alpha/Beta power peaks + Individual Alpha Frequency (IAF)
+- Aperiodic exponent (spectral slope)
+- SMR baseline strength
+- Interhemispheric coherence (C3–C4)
+
+> Note: features are often subdivided by **channel**, **condition** (rest / imagined / real), and **frequency band** where applicable.
+
+---
+
+## Relevant coding files
+- `resting_state_features_extraction.py`  
+  Primary script for preprocessing and **resting-state feature extraction**.
+- `test_resting_state_features_extraction.py`  
+  Quick validation / smoke-test script for the extraction pipeline.
+- `resting_state_eda.ipynb`  
+  EDA and plots focused on resting-state features.
+- `more_feat_and_vis.ipynb`  
+  Additional feature experiments + visualization notebook, code eventually used to help generate several features in the `resting_state_features_extraction.py`.
+- `generate_ground_truth_labels.py`  
+  Generates decoder-derived ground-truth labels used for downstream literacy prediction, taken from the BCI-Classifier repo.
+- Quarter 1 legacy (kept for reference / reuse):
+  - `multi_subject_imagined_vs_actual_new.py`
+  - `imagined_vs_actual_analysis_new.py`
+
+---
+
+## Relevant folders/csv files
+- `eeg-motor-movementimagery-dataset-1.0.0/`  
+  Local copy of the PhysioNet EEGBCI dataset (EDF + event files).
+- `resting_state_features.csv`  
+  **Final** resting-state feature table
+- `eeg_features_column_descriptions.pdf`  
+  Column glossary / feature descriptions.
+- `json-from-bci-classifier/`  
+  Copies of results JSONs from the training repo for plotting/reporting (e.g., model evaluation + classifier metadata).
+- `outputs/`  
+  Logs generated during extraction runs.
+- `Visualizations/` and `Visualizations_ERDERS%/`  
+  Saved figures used in the report/poster.
+
+---
+
+## How to run code
+
+### General workflow (recommended order)
+1. **Generate ground-truth labels**
+   ```bash
+   python generate_ground_truth_labels.py
+   ```
+   Outputs: label JSON/CSV artifacts (see `json-from-bci-classifier/` if you keep copies here).
+
+2. **Extract resting-state features**
+   ```bash
+   python resting_state_features_extraction.py
+   ```
+   Outputs: `resting_state_features.csv` (and logs under `outputs/`).
+
+3. **EDA / visualizations (optional)**
+   - Open and run:
+     - `resting_state_eda.ipynb`
+     - `more_feat_and_vis.ipynb`
+
+### Notes for notebooks
+- In VSCode/Jupyter, use **Run All**.
+- If export cells are commented out to avoid verbose logs, uncomment and rerun those cells.
+
+### Notes for `.py` scripts
+Use:
+```bash
+python <filename>.py
+```
+
+---
+
+## Output Structure
+Typical outputs generated/used by the Quarter 2 pipeline:
+
+```
+outputs/
+└── feature_extraction.log
+
+json-from-bci-classifier/
+├── ground_truth_labels.json
+├── early_trial_features_merged copy.json
+├── model_evaluation copy.json
+└── rf_classifier_metadata.json
+
+Visualizations/
+└── *.png
+
+Visualizations_ERDERS%/
+└── *.png
+
+resting_state_features.csv
+```
+
+---
+
+## Technical Details
+### Processing Steps (high level)
+1. **Data loading:** EDF files + event markers from the PhysioNet EEGBCI dataset.
+2. **Preprocessing:** re-referencing and bandpass filtering (parameters documented in the extraction script).
+3. **Resting-state feature extraction:** compute spectral, rhythm-strength, and stability metrics from baseline recordings.
+4. **Ground truth (decoder-derived literacy):** CSP–LDA decoding performance used as the target label for the screening model (trained in the companion repo).
+5. **EDA/visualization:** quality checks, distribution plots, and report figures.
+
+### Reproducibility tips
+- Keep the dataset folder out of Docker build context (use `.dockerignore`) to avoid huge images.
+- If channel names include punctuation (e.g., `Cz..`), you may need to normalize channel labels in code when selecting channels.
+
+---
+
+## Quick Start (Docker)
+```bash
+docker build -t eeg-project .
+docker run -it --rm \
+  -v "$(pwd)":/workspace \
+  eeg-project bash
+```
+
+Inside Docker:
+```bash
+python generate_ground_truth_labels.py
+python resting_state_features_extraction.py
+```
+
+(Optional) start Jupyter:
+```bash
+jupyter lab --ip 0.0.0.0 --port 8888 --no-browser --allow-root
+```
+
+---
+
+## Local Installation
+```bash
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+Run:
+```bash
+python generate_ground_truth_labels.py
+python resting_state_features_extraction.py
+```
+
+---
+
+## Requirements
+- Python **3.11+** recommended
+- MNE-Python
+- NumPy, SciPy, Pandas
+- Matplotlib, Seaborn
+- scikit-learn, statsmodels
+- tqdm (progress bars)
+- 8+ GB RAM recommended (more helps when running across many subjects)
+- Multi-core CPU recommended for faster preprocessing/feature extraction
